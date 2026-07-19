@@ -1,0 +1,970 @@
+﻿@{
+    ViewData["Title"] = "stock::";
+    Layout = null;// "~/Views/Shared/_Layout.cshtml";
+}
+@*<meta http-equiv="refresh" content="80" />*@
+<title>Stock Tracker- Portfolio Tracker</title>
+ <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<link href='https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/ui-lightness/jquery-ui.css'
+      rel='stylesheet' />
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js">
+</script>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js">
+</script>
+<link href="~/lib/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
+<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/responsive/2.2.7/js/dataTables.responsive.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.3/css/dataTables.dataTables.min.css">
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous" />
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+<style>
+    table#tblstock {
+        font-weight: bold;
+        font-size:22px;
+    }
+
+    .downMrktS {
+        background: url(https://images.moneycontrol.com/images/portfolio/opt/portfolio_sprite_v1.gif) -222px 0 no-repeat;
+        width: 13px;
+        height: 12px;
+        display: inline-block;
+    }
+
+    .upMrktS {
+        /*background: url(../../wwwroot/css/up.JPG) -240px 0 no-repeat;*/
+        background: url(https://images.moneycontrol.com/images/portfolio/opt/portfolio_sprite_v1.gif) -240px 0 no-repeat;
+        width: 13px;
+        height: 12px;
+        display: inline-block;
+    }
+
+    .tbl_redtxt{
+    color:red;
+    }
+
+    .tbl_greentxt {
+        color: green;
+    }
+
+
+        .blinking-text {
+            text-align: center;
+            animation: blink 1s infinite; 
+        }
+
+  
+</style>
+@*<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>*@
+
+<style>
+    .tabs {
+      
+        width: 100%;
+        text-align: left;
+    }
+
+    .tab-nav-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        position: relative !important;
+        z-index: 999 !important;
+        top: 3px;
+    }
+
+    .tabs ul {
+        display: block;
+        /*width: max-content;*/
+        overflow-y: hidden;
+        margin: 0px;
+        padding-inline-start: 5px;
+    }
+
+        .tabs ul li {
+            display: inline-block;
+            border: 1px solid grey;
+            border-bottom: 3px solid grey;
+            background-color: white;
+        }
+
+            .tabs ul li.active {
+                border: 1px solid black;
+                border-bottom: 3px solid white;
+            }
+
+            .tabs ul li a {
+                text-decoration: none;
+                color: grey;
+                padding: 10px;
+                line-height: 25px;
+                position: relative;
+                font-weight: bold;
+            }
+
+    .tab-content-wrapper {
+        position: relative !important;
+        z-index: 1 !important;
+        border: 3px solid grey;
+        padding: 20px;
+        min-height: 40px;
+    }
+    * {
+  box-sizing: border-box !important;
+  padding: 0;
+  margin: 0;
+}
+
+
+</style>
+<section class="vh-100" >
+    <div>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index"> </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <img src="~/images/lakshmi4.gif" style="height:50px;" />
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="/Reports" asp-action="Index">Reports</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="/Nifty50" asp-action="Index">Nifty50</a>
+                        </li>
+                         <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="/FiiDaily" asp-action="Index">FII Report</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+
+    </div>
+              <div class="card" style="border-radius: 1rem;">
+ <div class="card-body p-4 p-lg-5 text-black" style="padding:0px !important;margin-bottom:15px;margin-left:15px;margin-right:25px;">
+     <div style="display:none">
+            <a id="indicesval0a"></a>
+            <a id="indicesval1a"></a>
+            <a id="indicesval2a"></a>
+            </div>
+            <table class="table table-bordered" style="display:none;font: bold 20px Arial;background-color:lavenderblush" id="tblstock111">
+                <thead>
+                    <tr id="sample">
+                       
+                    </tr>
+                </thead>
+            </table>
+            <table class="table table-bordered" style="font: bold 20px Arial;background-color:lavenderblush" id="tblstock111">
+                <thead>
+                    <tr>
+                        <th style="    vertical-align: top;"> <span id="indices0"></span>:- <span id="indicesval0"></span> (<span id="indiceschange0"></span>)<span id="indiceschange0a"></span> <div id="nvix"> </div></th>
+                        <th style="    vertical-align: top;"><span id="indices1"></span>:- <span id="indicesval1"></span> (<span id="indiceschange1"></span>)<span id="indiceschange1a" class="downMrktS"></span><div id="nindex"> </div></th>
+                        <th style="    vertical-align: top;"><span id="indices2"></span>:- <span id="indicesval2"></span> (<span id="indiceschange2"></span>)<span id="indiceschange2a" class="downMrktS"></span><div id="nbankindex"> </div></th>
+
+                        <th id="l30" style="display:none;    vertical-align: top !important;">
+                            Market Mood Index: <span style="color:green ;font: bold 20px Arial"><span id="val1"></span> High Extreme Fear (&#60;30)</span> <a href="#" onclick="togglemood()"> more..</a><span id="mmoddval1" style="display:none">
+                                <br />suggests a good time to open fresh positions, as markets are likely to be oversold and might turn upwards.
+                            </span>
+                        </th>
+                        <th id="l3050" style="display:none;    vertical-align: top !important;">
+                            Market Mood Index: <span style="color:orange ;font: bold 20px Arial"><span id="val2"></span> Fear (30—50)</span><a href="#" onclick="togglemood()"> more..</a> <span id="mmoddval2" style="display:none">
+                                <br />
+                                suggests that investors are fearful in the market, but the action to be taken depends on the MMI trajectory.<br />
+                                If it is dropping from Greed to Fear, it means fear is increasing in the market & investors should wait till it reaches Extreme Fear, as that is when the market is expected to turn upwards<br />
+                                If MMI is coming from Extreme fear, it means fear is reducing in the market. If not best, might be a good time to open fresh positions.
+                            </span>
+                        </th>
+
+                        <th id="l5070" style="display:none;    vertical-align: top !important;">
+                            Market Mood Index: <span style="color:darkorange ;font: bold 20px Arial"><span id="val3"></span> Greed (50 -70)</span><a href="#" onclick="togglemood()"> more..</a><span id="mmoddval3" style="display:none">
+                                <br />
+                                t suggests that investors are acting greedy in the market, but the action to be taken depends on the MMI trajectory.<br />
+                                If MMI is coming Neutral towards Greed zone, it means greed is increasing in the market and investors should be cautious in opening new positions.<br />
+                                If MMI is dropping from Extreme Greed, it means greed is reducing in the market. But more patience is suggested before looking for fresh opportunities.
+                            </span>
+                        </th>
+                        <th id="lg70" style="display:none;    vertical-align: top !important;">
+                            Market Mood Index: <span style="color:darkred ;font: bold 20px Arial">
+                                <span id="val4"></span> Extreme GREED (&gt;70)
+                            </span> <a href="#" onclick="togglemood()"> more..</a><span id="mmoddval4" style="display:none">  <br />High extreme greed (>80) suggests investors should avoid opening fresh positions as markets are overbought and likely to turn downwards.</span>
+                        <a onclick="togglev();" style="cursor: pointer;">Final Value :-</a> <span style="display:none;" id="finalvalueall"> <span id="finalvalue"></span><span id="finalvaluea" class="downMrktS"></span></span>    
+                        </th>
+                       
+
+                        <th>Profitable Value :-<br /> <span id="totalwithdraw"></span><span id="totalwithdrawa" class="downMrktS"></span></th>
+                        <th>
+                               <div id="dvmonthlyprofit" style="color:green;"></div>
+                            <div id="dvdividend" style="color:green;"></div></th>
+                        <th>  
+                            <div id="dvmonthTotal" style="color:green;"></div>  
+                        </th>
+                    </tr>
+                </thead>
+            </table>
+               
+            <div>    </div>
+ <div>
+            <table class="table table-bordered"  style=" width:48% !important;border: 1px black; font-weight: bold; font-size:22px;margin-top:10px;float:left;" id="tblprofitstockt">
+                    <thead>
+                        <tr>
+                            <th>
+                               <form>
+                <div class="row">
+                    <div class="col">
+                        <input type="text" class="form-control" placeholder="Stock" id="txtStockt">
+                        @*    @Html.EditorFor(StockScript => StockScript.Code, new { htmlAttributes = new { @class = "form-control" } })*@
+                    </div>
+
+                    <div class="col" style="display:none;" >
+                        <input type="text" style="display:none;" class="form-control" value="0" placeholder="Target  Price" id="txtPricet">
+                    </div>
+                    <div class="col" style="display:none;" >
+                        <input type="text"  style="display:none;"  class="form-control date-today" placeholder="Target Date" id="txtStockDatet">
+                    </div>
+                    <div class="col" style="display:none;" >
+                        <input type="text" class="form-control" height="5" placeholder="notes" id="txtnotes">
+                    </div>
+
+                    <div class="col">
+                        <button type="submit" class="btn btn-primary" onclick="return AddStockt();">ADD</button>
+                    </div>
+                </div>
+            </form>
+                            </th>
+                                              
+                        <th>
+                             <a href="#" onclick = "return CompactView('0', ',0');" > <img src="/images/stack.jpg" style = "height:30px;" /> </a>
+                        </th>
+                        </tr>
+                    </thead>
+                   
+                </table>
+          
+            <span style="margin-top:8px; margin-right:40px;float:right; width:46%;padding:5px;font: bold 20px Arial;background-color:lavenderblush;margin-left:10px;" id="stocklisttrend">
+                
+
+
+            </span> 
+           <div style="margin-top:8px; margin-right:40px;float:right; width:46%;padding:5px;font: bold 20px Arial;background-color:lavenderblush;margin-left:10px;" id="DvFII">
+                
+FII DATA <br />
+
+            </div>
+           
+        </div>             
+            <input id="hdncollapse" type="hidden" value="0" />
+                </div>
+                </div>
+</section>
+<script>
+      $(document).ready(function () {
+        $(document).tooltip({
+            track: true
+        });
+    });
+
+    const month = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+var myVar;    
+function showTime(){
+    var d = new Date();
+    var t = d.toLocaleTimeString();
+    $("#datetimeval").html("Time Now: - "+t); // display time on the page
+}
+function stopFunction(){
+    clearInterval(myVar); // stop the timer
+}
+$(document).ready(function(){
+    myVar = setInterval("showTime()", 1000);
+});
+
+
+
+    $(document).ready(function () {
+        $("#txtStockt").autocomplete({
+            source: function (request, response) {
+                $.ajax({
+                    url: "/Reports/Index",
+                    type: "POST",
+                    dataType: "json",
+                    data: { Prefix: request.term },
+                    success: function (data) {
+                        response($.map(data, function (item) {
+                            return { label: item.name, value: item.code };
+                        }))
+                    }
+                })
+            },
+            messages: {
+                noResults: "", results: ""
+            }
+        });
+
+        $("#txtStock").autocomplete({
+            source: function (request, response) {
+                $.ajax({
+                    url: "/Reports/Index",
+                    type: "POST",
+                    dataType: "json",
+                    data: { Prefix: request.term },
+                    success: function (data) {
+                        response($.map(data, function (item) {
+                            return { label: item.name, value: item.code };
+                        }))
+                    }
+                })
+            },
+            messages: {
+                noResults: "", results: ""
+            }
+        });
+    })
+   // var iscollapsed=0;
+    var stockcount = 0;
+
+    var adv = 0;
+    var dec = 0;
+
+
+
+    function toggleAll(source){
+ 
+        var iscollapsed = $('#hdncollapse').val();
+       if(source=='link')
+       {
+            $('#hdncollapse').val(1 - iscollapsed);
+       }
+         iscollapsed = $('#hdncollapse').val();
+       // alert(source);
+      //  int i=1;
+        for (i = 1; i < stockcount+1; i++)
+        {
+           if(iscollapsed==0){
+            $('#toggleg1'+i).show();
+                $('#toggleg2' + i).show();
+                $('#toggleg3' + i).show();
+                $('#hdncollapse').val("0");
+           }
+            if (iscollapsed == 1) {
+                $('#toggleg1' + i).hide();
+                $('#toggleg2' + i).hide();
+                $('#toggleg3' + i).hide();
+                $('#hdncollapse').val("1");
+            }
+        }
+      
+    }
+
+    function togglemood() {
+      
+         $("#mmoddval1").toggle();
+        $("#mmoddval2").toggle();
+        $("#mmoddval3").toggle();
+        $("#mmoddval4").toggle();
+    }
+ 
+    function togglev()
+    {
+        $("#totalinvested").toggle();
+        $("#finalvalueall").toggle();
+      //  $("#finalvaluea").toggle();
+    }
+   
+    function reloadt()
+   {
+      
+        $('#tblprofitstockt').DataTable().ajax.reload();
+        $("#tblstock").DataTable().ajax.reload();
+       
+    }
+
+    $(document).ready(function () {
+        loadData();
+        showtracking();
+        var d = new Date();
+        var month = d.getMonth() + 1;
+        var day = d.getDate();
+
+       var d = new Date();
+        var month = d.getMonth() + 1;
+        var day = d.getDate();
+
+        var output =  (month < 10 ? '0' : '') + month + '/' +
+        (day < 10 ? '0' : '') + day + '/' +
+           
+            d.getFullYear();
+
+          $("#txtStockDatet").datepicker();
+        $("#txtStockDatet").val(output);
+
+        setInterval(reloadt, 8000);
+
+        
+    });
+   
+    function AddStock() {
+        debugger;
+        if ($('#txtStock').val() == '') {
+            alert('Please enter stock');
+            $('#txtStock').focus();
+            return false;
+        }
+        if ($('#txtStockDate').val() == '') {
+            alert('Please enter stock date');
+            $('#txtStockDate').focus();
+            return false;
+        }
+        if ($('#txtShares').val() == '') {
+            alert('Please enter shares');
+            $('#txtShares').focus();
+            return false;
+        }
+        if ($('#txtPrice').val() == '') {
+            alert('Please enter price');
+            $('#txtPrice').focus();
+            return false;
+        }
+ 
+        var jsonInput1 = {
+            Script_code: $('#txtStock').val(),
+            DateAdded: $('#txtStockDate').val(),
+            shares: $('#txtShares').val(),
+            inv_Price: $('#txtPrice').val()
+        };
+        
+        var inputval=(JSON.stringify(jsonInput1));
+     //   alert(inputval);   
+        $.ajax({
+            type: 'POST',
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            url: '/Home/Add/?jsonInput=' + inputval,
+          //  data:  inputval ,
+            data: ({ jsonInput: JSON.stringify(jsonInput1) }),
+            success: function (result) {
+              //  loadData();
+            },
+            error: function (errormessage) {
+                alert('error');
+            }
+        });
+    }
+  
+    var min_value = 0;
+    var max_value = 0;
+    function CalculateData(jsonObj) {
+        var totalinvestedv = 0;
+        var indices_c=0; 
+        var plus_count=0;
+        var overallgain = 0;
+        var todygain = 0;
+         min_value=0;
+         max_value=0;
+        var max_comp="";
+        var min_comp="";
+         $('#DvFII' ).html('FII Data<hr/>');
+        stockcount=jsonObj.length;
+        var profatble_val=0;
+        adv = 0;
+        dec = 0;
+        for (i = 0; i < jsonObj.length;i++)
+        {
+            totalinvestedv += parseFloat(jsonObj[i].shares) * parseFloat(jsonObj[i].inv_Price);
+            overallgain += parseFloat(jsonObj[i].overAllGain);
+            todygain += parseFloat(jsonObj[i].daysGain);
+            if (jsonObj[i].daysGain < min_value) {
+                min_value = jsonObj[i].daysGain;
+                min_comp = jsonObj[i].Company_name;
+            } 
+            if (jsonObj[i].overAllGain>0)
+            {
+                plus_count++;
+                    if (jsonObj[i].overAllGain>1000)
+                    {
+                        profatble_val += jsonObj[i].latestValue;
+                    }
+            }
+            // find maximum value
+            if (jsonObj[i].daysGain > max_value) {
+                max_value = jsonObj[i].daysGain;
+                max_comp = jsonObj[i].Company_name;
+            }
+            if (jsonObj[i].daysGain>0)
+            {
+                adv++;
+            }
+            else
+            {
+                dec++;
+            }
+            if(jsonObj[i].stock_listing!=null)
+            {
+                 $('#stocklisttrend' ).html('<div id="psummaryval" >Portfolio Trend </div><hr/>'+jsonObj[i].stock_listing+'<hr/>');
+            }
+          
+            if(jsonObj[i].FIIData!='')
+            {
+                 $('#DvFII' ).append(jsonObj[i].Company_name+'<br/>'+jsonObj[i].FIIData+'<hr/>');
+            }
+            if(indices_c==0)//for indices only
+            {
+                try
+                {
+                    //$('#stocklisttrend' ).html('<div id="psummaryval" >Portfolio Trend </div><hr/>'+jsonObj[i].stock_listing+'<hr/>');
+
+                if(jsonObj[i].Indices!=null)
+                {
+                indices_c=1;
+                
+                $('#nvix' ).html( jsonObj[i].Indices[0].index_html);
+                $('#nindex' ).html( jsonObj[i].Indices[1].index_html);
+                $('#nbankindex').html(jsonObj[i].Indices[2].index_html);
+                }
+               
+              //  $('#sample').html(jsonObj[i].indicesText);
+                for (j = 0; j < 3; j++)
+                {
+                var cname = jsonObj[i].Indices[j].companyName;
+                var cclose = jsonObj[i].Indices[j].close;
+                    var cchange = jsonObj[i].Indices[j].change;// ;
+
+                    $('#indices'+j).text(cname);
+                    $('#indicesval'+j).text(cclose);
+                    $('#indiceschange' + j).text(cchange+ " (" + jsonObj[i].Indices[j].changepercent + "%)");
+ 
+
+                    setstyle('indiceschange' + j, cchange);
+                    setstyle('indicesval' + j, cchange);
+                    //setstyle('todaygain',todygain);
+                    //setstyle('todaygain', todygain);
+                    }
+                }
+                  catch(err) { 
+               // alert(err);
+                }
+            }
+        }
+        MoodDesc(jsonObj[0].MMood);
+
+         var col="red";
+                    if(todygain>=0)
+                    {col="green";
+                    }
+                    var total= 'Today:- <span id="todaygain1"  style="font-size: 22px;color: '+col+'; font-weight: bolder;margin-bottom:5px;"></span>';
+                 //   $('#stocklisttrend' ).append(total);
+                 
+                     col="red";
+                    if(overallgain>=0)
+                    {col="green";
+                    }
+                       var overall= ' <span  style="font-size: 26px;" >| Total</span> <span id="todaygain2"  style="font-size: 24px;color: '+col+'; font-weight: bolder;margin-bottom:5px;"></span>';
+
+               //     $('#stocklisttrend' ).append(overall);
+                    $('#psummaryval' ).html(total+overall);
+
+                    
+
+
+      var overallpercent = parseFloat(overallgain / totalinvestedv)*100;
+        $('#totalinvested').text('₹' + totalinvestedv.toLocaleString('en-IN'));
+        var todaysg = parseFloat(todygain / totalinvestedv) * 100;
+        $('#todaygain').text('₹' + todygain.toLocaleString('en-IN') + "(" + (todaysg.toFixed(2)) + "%)");
+        $('#todaygain1').text('₹' + todygain.toLocaleString('en-IN') + "(" + (todaysg.toFixed(2)) + "%)");
+        $('#todaygain2').text('₹' + overallgain.toLocaleString('en-IN') + "(" + (overallpercent.toFixed(2)) + "%)");
+
+
+  
+        $('#overallgain').text('₹' + overallgain.toLocaleString('en-IN') + "(" + (overallpercent.toFixed(2)) + "%)");
+$('#dvcount').text(" ["+plus_count+" / "+jsonObj.length+"]");
+        var finalvalue = parseFloat(overallgain) + parseFloat(totalinvestedv);
+        $('#finalvalue').text('₹' + (finalvalue).toLocaleString('en-IN'));
+        $('#totalwithdraw').text('₹' + (profatble_val).toLocaleString('en-IN') + " (" + ((profatble_val / totalinvestedv) * 100).toFixed(2) + "%)");
+      //  setstyle('totalinvested', totalinvestedv);
+        setstyle('todaygain',todygain);
+        setstyle('overallgain',overallgain);
+        setstyle('finalvalue', finalvalue);
+        setstyle('totalwithdraw', profatble_val);
+
+        $('#dadv').html(adv);
+        $('#ddec').html(dec);
+
+        $('#indices').html(jsonObj[0].Indices);
+
+        const d = new Date();
+        let name = month[d.getMonth()];
+       
+        $('#dvmonthlyprofit').text('P/L for [' + name + '- ' + d.getFullYear() + ']-> ₹' + (jsonObj[0].monthly_profit).toLocaleString('en-IN')+'/-');
+        var finalMonthly=jsonObj[0].monthly_profit+jsonObj[0].dividend;
+
+        if (jsonObj[0].monthly_profit >=0) {
+            $('#dvmonthlyprofit').attr("style", "color: green;");
+           // $('#dvmonthlyprofit').attr("class", "upMrktS");
+        }
+        else {
+            $('#dvmonthlyprofit').attr("style", "color: red;");
+            //$('#dvmonthlyprofit').attr("class", "downMrktS");
+
+        }
+        $('#dvmonthTotal').text('Total P/L[' + name + '- ' + d.getFullYear() + ']-> ₹' + (finalMonthly).toLocaleString('en-IN')+'/-');
+
+        if (finalMonthly >=0) {
+            $('#dvmonthTotal').attr("style", "color: green;");
+           // $('#dvmonthlyprofit').attr("class", "upMrktS");
+        }
+        else {
+            $('#dvmonthTotal').attr("style", "color: red;");
+            //$('#dvmonthlyprofit').attr("class", "downMrktS");
+
+        }
+         $('#dvholiday').html(jsonObj[0].holiday);
+         $('#dvdividend').text('Dividend for [' + name + '- ' + d.getFullYear() + ']-> ₹' + (jsonObj[0].dividend).toLocaleString('en-IN')+'/-');
+
+        var dNow = new Date();
+       
+        var dateTime = (dNow.getDate()) + '/' + dNow.getMonth() + '/' + dNow.getFullYear() + ' ' + formatAMPM(dNow);
+      
+        $('#datetimev').html('Last Updated on :' + '<span style="font-weight: bold;">' + dateTime + '</span>');
+
+    }
+    function CalculateprofitData(jsonObj){
+     for (i = 0; i < jsonObj.length;i++)
+        {
+         if(jsonObj[i].FIIData!=null)
+            {
+                 $('#DvFIIt' ).append(jsonObj[i].companyName+'<br/>'+jsonObj[i].FIIData+'<hr/>');
+            }
+        }
+    }
+
+    function  MoodDesc(val)
+    {
+      //  alert(val);
+        $('#l30').hide();
+        $('#l3050').hide();
+        $('#l5070').hide();
+        $('#lg70').hide();
+
+        if (val <= 30) {
+            $('#l30').show();
+            $('#val1').text(val);
+        }
+        if (val > 30 && val <= 50) {
+            $('#l3050').show();
+            $('#val2').text(val);
+        }
+
+        if (val > 50 && val <= 70) {
+            $('#l5070').show();
+            $('#val3').text(val);
+        }
+        if (val > 70) {
+            $('#lg70').show();
+            $('#val4').text(val);
+        }
+
+       
+
+    }
+    function addZero(i) {
+        if (i < 10) { i = "0" + i }
+        return i;
+    }
+   
+    function formatAMPM(date) {
+        var hours = date.getHours();
+        var minutes = date.getMinutes();
+        var ampm = hours >= 12 ? 'pm' : 'am';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        var seconds = addZero(date.getSeconds());
+        var strTime = hours + ':' + minutes + ':' + seconds +' '+ ampm;
+        return strTime;
+    }
+
+    function setstyle(spanid, val) {
+
+        if (val > 0) {
+            $('#' + spanid).attr("style", "color: green");
+               $('#' + spanid + 'a').attr("class", "upMrktS");
+        }
+        else {
+            $('#' + spanid).attr("style", "color: red");
+              $('#' + spanid + 'a').attr("class", "downMrktS");
+
+        }
+    }
+  
+    function loadData() {
+      //  event.preventDefault();
+    
+        $("#tblstock").DataTable({
+           "bSort": false,
+            "destroy": true,
+            "serverSide": false,
+            "filter": false,
+            "orderMulti": false,
+            fixedHeader: true,
+            "paging": false,
+             "bInfo" : false,
+            "ajax":
+            {
+                "url": "/Home/GetStockDetails",
+                "type": "POST",
+                "dataType": "JSON",
+                "dataSrc": function (json) {
+                  //  debugger;
+                    jsonObj = $.parseJSON(json.data)
+                    CalculateData(jsonObj);
+                    return jsonObj;
+                }
+            },
+            rowCallback: function (row, data, index) {
+                if (data["daysGain"] == max_value) {
+                 //   $('td', row).css('background-color', 'lightgreen');
+                    $('td:eq(1)', row).css('background-color', 'lightgreen');
+                }
+                if (data["daysGain"] == min_value) {
+                  
+                    $('td:eq(1)', row).css('background-color', 'orange');
+                }
+
+            },
+            "columns": [
+
+                { "data": "stockModel.Sno", sWidth: "5%" },
+
+                { "data": "stockModel.companyName", sWidth: "25%"  },
+                { "data": "changestr",  "autoWidth": true },
+
+                { "data": "overAllGain_str",  "autoWidth": true }
+
+              
+            ]
+
+        });
+        
+    }
+
+    $("#btnRefresh").click(function () {
+       
+       // alert("done");
+     reloadt();
+   
+    });
+   
+    function showtracking() {
+
+        //  $("#dvprofit").toggle();
+        $("#tblprofitstockt").DataTable({
+              "bSort": false,
+            "destroy": true,
+            "serverSide": false,
+            "filter": false,
+            "orderMulti": false,
+            "paging": false,
+             "bInfo" : false,
+            "ajax":
+            {
+                "url": "/Home/GetStockTrackingDetails?val=0",
+                "type": "POST",
+                "dataType": "JSON",
+                "dataSrc": function (json) {
+                  //  debugger;
+                    jsonObj = $.parseJSON(json.data)
+                    //alert(json.data);
+                   //  CalculateprofitData(jsonObj);
+                    return jsonObj;
+                }
+            },
+            rowCallback: function (row, data, index) {
+                if (data["display"] == "1") {
+                    $('td', row).css('background-color', 'antiquewhite');
+                   // $('td:eq(1)', row).css('background-color', 'lightgreen');
+                }
+              
+            },
+            "columns": [
+              //  { "data": "Sno", "autoWidth": false },
+                { "data": "Script_name", "autoWidth": true },
+               //{ "data": "tgt_date", "autoWidth": true },
+              
+                //{ "data": "current_Price_str", "autoWidth": true },
+              
+              // { "data": "notes", "autoWidth": true },
+                {
+                    "data": "id", sWidth: "20%",
+                    "render": function (data, type, row, meta) {
+                        data = '<a href="#" onclick="return removeid(' + data + ');"> <img src="/images/delete.png" style="height:30px;" /></a>'+
+                            '<a href="#" onclick = "return removepin(' + data + ');" > <img src="/images/pin.png" style = "height:30px;" /> </a>'+
+                             '<a href="#" onclick = "return CompactView(' + data + ',0);" > <img src="/images/stack.jpg" style = "height:30px;" /> </a>';
+                        return data;
+                    }
+                }
+            ]
+
+        });
+
+      
+       
+
+    }
+    function removeid(id)
+    {
+
+        if (confirm('Are you sure you want to remove?')) {
+  
+    $.ajax({
+            type: 'POST',
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            url: '/Home/RemoveTracking/?id=' + id,
+          //  data:  inputval ,
+            data: ({ id: JSON.stringify(id) }),
+            success: function (result) {
+              //  loadData();
+            },
+            error: function (errormessage) {
+                alert('error');
+            }
+        });
+        }
+    return false;
+    }
+    
+    
+    function removepin(id) {
+
+        if (confirm('Are you sure you want to continue?')) {
+
+            $.ajax({
+                type: 'POST',
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                url: '/Home/RemovePin/?id=' + id,
+                //  data:  inputval ,
+                data: ({ id: JSON.stringify(id) }),
+                success: function (result) {
+                    //  loadData();
+                },
+                error: function (errormessage) {
+                    alert('error');
+                }
+            });
+        }
+        return false;
+    }
+
+
+    function Sellshare(id) {
+
+        if (confirm('Are you sure you want to continue?')) {
+            var name = window.prompt("Sell price...", "");
+
+            $.ajax({
+                type: 'POST',
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                url: '/Home/Sell/?id=' + id+'&price='+name,
+                data: ({ id: JSON.stringify(id),price: name }),
+                success: function (result) {
+                },
+                error: function (errormessage) {
+                    alert('error');
+                }
+            });
+        }
+        return false;
+    }
+
+    function AddStockt() {
+        debugger;
+        if ($('#txtStockt').val() == '') {
+            alert('Please enter stock');
+            $('#txtStockt').focus();
+            return false;
+        }
+
+        if ($('#txtPricet').val() == '') {
+            alert('Please enter price');
+            $('#txtPricet').focus();
+            return false;
+        }
+
+        if ($('#txtStockDatet').val() == '') {
+            alert('Please enter stock date');
+            $('#txtStockDatet').focus();
+            return false;
+        }
+      
+
+        var jsonInput1 = {
+            Script_code: $('#txtStockt').val(),
+            tgt_Date: $('#txtStockDatet').val(),
+            notes: $('#txtnotes').val(),
+            tgt_Price: $('#txtPricet').val()
+        };
+
+        var inputval = (JSON.stringify(jsonInput1));
+        //   alert(inputval);
+        $.ajax({
+            type: 'POST',
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            url: '/Home/AddTrack/?jsonInput=' + inputval,
+            //  data:  inputval ,
+            data: ({ jsonInput: JSON.stringify(jsonInput1) }),
+            success: function (result) {
+                //  loadData();
+                debugger;
+                showmsg(result)
+                alert(result);
+            },
+            error: function (errormessage) {
+                debugger;
+                alert('error');
+            }
+        });
+        showtracking();
+    }
+
+    function CompactView(id,tracker) {
+      //  alert(tracker);
+      //  if (confirm('Are you sure you want to continue?')) {
+
+            $.ajax({
+                type: 'POST',
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                url: '/Home/CompactView/?id=' + id+'&tracker='+tracker,
+                //  data:  inputval ,
+                data: ({ id: JSON.stringify(id) },{ tracker: JSON.stringify(tracker) }),
+                success: function (result) {
+                    //  loadData();
+                  //  alert('done');
+                },
+                error: function (errormessage) {
+                    alert('error');
+                }
+            });
+       reloadt();
+        showtracking();
+        return false;
+    }
+    
+</script>
+

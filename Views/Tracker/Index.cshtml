@@ -1,0 +1,543 @@
+﻿@{
+    ViewData["Title"] = "stock::";
+    Layout =null;//  "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<link href='https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/ui-lightness/jquery-ui.css'
+      rel='stylesheet' />
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js">
+</script>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js">
+</script>
+<link href="~/lib/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
+<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/responsive/2.2.7/js/dataTables.responsive.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.3/css/dataTables.dataTables.min.css">
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous" />
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+<style>
+    table#tblstock {
+        font-weight: bold;
+        font-size: 22px;
+    }
+
+    .downMrktS {
+        background: url(https://images.moneycontrol.com/images/portfolio/opt/portfolio_sprite_v1.gif) -222px 0 no-repeat;
+        width: 13px;
+        height: 12px;
+        display: inline-block;
+    }
+
+    .upMrktS {
+        /*background: url(../../wwwroot/css/up.JPG) -240px 0 no-repeat;*/
+        background: url(https://images.moneycontrol.com/images/portfolio/opt/portfolio_sprite_v1.gif) -240px 0 no-repeat;
+        width: 13px;
+        height: 12px;
+        display: inline-block;
+    }
+
+    .tbl_redtxt {
+        color: red;
+    }
+
+    .tbl_greentxt {
+        color: green;
+    }
+
+</style>
+@*<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>*@
+
+<style>
+    .tabs {
+     
+        width: 100%;
+        text-align: left;
+    }
+
+   
+
+    .tab-nav-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        position: relative !important;
+        z-index: 999 !important;
+        top: 3px;
+    }
+
+    .tabs ul {
+        display: block;
+        /*width: max-content;*/
+        overflow-y: hidden;
+        margin: 0px;
+        padding-inline-start: 5px;
+    }
+
+        .tabs ul li {
+            display: inline-block;
+            border: 1px solid grey;
+            border-bottom: 3px solid grey;
+            background-color: white;
+        }
+
+            .tabs ul li.active {
+                border: 1px solid black;
+                border-bottom: 3px solid white;
+            }
+
+            .tabs ul li a {
+                text-decoration: none;
+                color: grey;
+                padding: 10px;
+                line-height: 25px;
+                position: relative;
+                font-weight: bold;
+            }
+
+    .tab-content-wrapper {
+        position: relative !important;
+        z-index: 1 !important;
+        border: 3px solid grey;
+        padding: 20px;
+        min-height: 40px;
+    }
+</style>
+<section class="vh-100" >
+    <div>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index"> </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <img src="~/images/lgo.jpg" style="height:50px;" />
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Reports" asp-action="Index">Reports</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="/Nifty50" asp-action="Index">Nifty50</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="/FiiDaily" asp-action="Index">FII Report</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="/portfolio" asp-action="Index">Stock Report</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+
+    </div>
+    <div class="card" style="border-radius: 1rem;">
+        <div class="row g-0"  style="margin-top:20px;margin-left:30px;">
+          
+            <div class="col-md-12  d-flex align-items-center" >
+                <hr />
+                    <div style="display:block;">
+                        <h3>Add Stock for tracking</h3>
+                        <br />
+                    <br />
+
+                        <form>
+                            <div class="row">
+                                <div class="col">
+                                    <input type="text" class="form-control" placeholder="Stock" id="txtStockt">
+                            </div>
+                            
+                            <div class="col">
+                                <input type="text" class="form-control" placeholder="Target  Price" id="txtPricet">
+                            </div>
+                                <div class="col">
+                                  
+                                    <input type="text" class="form-control date-today" placeholder="Target Date" id="txtStockDatet">
+                               
+                                </div>
+                                <div class="col">
+                                    <input type="text" class="form-control" height="5" placeholder="notes" id="txtnotes">
+                                </div>
+                              
+                                <div class="col">
+                                    <button type="submit" class="btn btn-primary" onclick="return AddStockt();">ADD</button>
+                                </div>
+                            </div>
+                        </form>
+
+                </div>
+            </div>
+
+            <div class="col-md-12  d-flex align-items-center" style="margin-top:20px;"> <button type="submit" class="btn btn-primary" id="btnRefresh">Show data</button></div>
+            <div class="col-md-12  d-flex align-items-center" style="margin-top:20px;">
+
+                <table class="table table-bordered" style="border: 1px black; font-weight: bold; font-size:22px;width:1800px" id="tblprofitstockt">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>
+                                    Company Sector
+                                </th>
+                                <th>
+                                    Date Added
+                                </th>
+
+                                <th>
+                                Current Price/Target
+                                </th>
+                            <th>
+                                Target Date
+                            </th>
+                                <th>
+                                    notes
+                                </th>
+                            <th>
+                                Status
+                            </th>
+                            <th>
+                               
+                            </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+
+
+                    </div>
+               
+           
+           
+        </div>
+    </div>
+
+</section>
+<script>
+    const month = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    setTimeout($("#btnRefresh").click, 180);
+
+    $(document).ready(function () {
+        $(".tab-nav-wrapper li.active").click();
+        $($(".tab-nav-wrapper li.active a").attr("href")).show();
+
+        $(".tab-nav-wrapper li").click(function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            $(".tab-nav-wrapper li").removeClass("active");
+            $(this).addClass("active");
+
+            var target = $(this).find("a").attr("href");
+            $(".tab-content-wrapper").find(".tab-content").hide();
+            $(".tab-content-wrapper").find(target).show();
+
+           
+        })
+    });
+    
+    $(document).ready(function () {
+     
+        var d = new Date();
+        var month = d.getMonth() + 1;
+        var day = d.getDate();
+
+        var output =  (month < 10 ? '0' : '') + month + '/' +
+        (day < 10 ? '0' : '') + day + '/' +
+           
+            d.getFullYear();
+        $("#txtStockDate").datepicker();
+        $("#txtStockDate").val(output);
+        $("#txtStockDatet").datepicker();
+        $("#txtStockDatet").val(output);
+        showtracking();
+    });
+
+    $("#txtStockt").autocomplete({
+        source: function (request, response) {
+            $.ajax({
+                url: "/Reports/Index",
+                type: "POST",
+                dataType: "json",
+                data: { Prefix: request.term },
+                success: function (data) {
+                    response($.map(data, function (item) {
+                        return { label: item.name, value: item.code };
+                    }))
+                }
+            })
+        },
+        messages: {
+            noResults: "", results: ""
+        }
+    });
+
+    function showmsg(result) {
+        alert(result);
+    }
+
+    function formatAMPM(date) {
+        var hours = date.getHours();
+        var minutes = date.getMinutes();
+        var ampm = hours >= 12 ? 'pm' : 'am';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        var strTime = hours + ':' + minutes + ' ' + ampm;
+        return strTime;
+    }
+
+    function setstyle(spanid, val) {
+
+        if (val > 0) {
+            $('#' + spanid).attr("style", "color: green");
+            $('#' + spanid + 'a').attr("class", "upMrktS");
+        }
+        else {
+            $('#' + spanid + 'a').attr("style", "color: red");
+            $('#' + spanid + 'a').attr("class", "downMrktS");
+
+        }
+    }
+
+   
+
+    function ShowStock() {
+
+
+        $("#dvprofit").toggle();
+        $("#tblprofitstock").DataTable({
+            "processing": true,
+            "destroy": true,
+            "serverSide": false,
+            "filter": false,
+            "orderMulti": false,
+            "paging": false,
+            "ajax":
+            {
+                "url": "/Home/GetprofitStockDetails",
+                "type": "POST",
+                "dataType": "JSON",
+                "dataSrc": function (json) {
+                    debugger;
+                    jsonObj = $.parseJSON(json.data)
+                    //alert(json.data);
+                    CalculateprofitData(jsonObj);
+                    return jsonObj;
+                }
+            },
+
+            "columns": [
+                { "data": "Sno", "autoWidth": false },
+                { "data": "Name", "autoWidth": true },
+                {
+                    data: 'profitpercent', "autoWidth": true,
+                    render: function (data, type) {
+                        if (data <= 0) {
+                            color = 'red';
+                            Class = 'downMrktS';
+                        }
+                        else if (data > 0) {
+                            color = 'Green';
+                            Class = 'upMrktS';
+                        }
+                        return `<span style="color:${color};font-weight: bold;" >${data.toLocaleString('en-IN').toLocaleString('en-IN')}%</span><span class=${Class}></span>`;
+
+                    }
+                },
+
+                { "data": "buyPrice", "autoWidth": true },
+                { "data": "SellPrice", "autoWidth": true },
+                {
+                    data: 'perShare', "autoWidth": true,
+                    render: function (data, type) {
+                        if (data <= 0) {
+                            color = 'red';
+                            Class = 'downMrktS';
+                        }
+                        else if (data > 0) {
+                            color = 'Green';
+                            Class = 'upMrktS';
+                        }
+                        return `<span style="color:${color};font-weight: bold;" >₹${data.toLocaleString('en-IN').toLocaleString('en-IN')}</span><span class=${Class}></span>`;
+
+                    }
+                },
+                {
+                    data: 'netProfit', "autoWidth": true,
+                    render: function (data, type) {
+                        if (data <= 0) {
+                            color = 'red';
+                            Class = 'downMrktS';
+                        }
+                        else if (data > 0) {
+                            color = 'Green';
+                            Class = 'upMrktS';
+                        }
+                        return `<span style="color:${color};font-weight: bold;" >₹${data.toLocaleString('en-IN').toLocaleString('en-IN')}</span><span class=${Class}></span>`;
+
+                    }
+                },
+                { "data": "SoldOn", "autoWidth": true },
+            ]
+
+        });
+
+        var table = $('#tblprofitstock').DataTable();
+
+    }
+
+
+
+
+    function AddStockt() {
+        debugger;
+        if ($('#txtStockt').val() == '') {
+            alert('Please enter stock');
+            $('#txtStockt').focus();
+            return false;
+        }
+        
+        if ($('#txtPricet').val() == '') {
+            alert('Please enter price');
+            $('#txtPricet').focus();
+            return false;
+        }
+
+        if ($('#txtStockDatet').val() == '') {
+            alert('Please enter stock date');
+            $('#txtStockDatet').focus();
+            return false;
+        }
+        //if ($('#txtShares').val() == '') {
+        //    alert('Please enter shares');
+        //    $('#txtShares').focus();
+        //    return false;
+        //}
+       // alert($('#txtStockDatet').val());
+
+        var jsonInput1 = {
+            Script_code: $('#txtStockt').val(),
+            tgt_Date: $('#txtStockDatet').val(),
+            notes: $('#txtnotes').val(),
+            tgt_Price: $('#txtPricet').val()
+        };
+
+        var inputval = (JSON.stringify(jsonInput1));
+        //   alert(inputval);
+        $.ajax({
+            type: 'POST',
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            url: '/Tracker/AddTrack/?jsonInput=' + inputval,
+            //  data:  inputval ,
+            data: ({ jsonInput: JSON.stringify(jsonInput1) }),
+            success: function (result) {
+                //  loadData();
+                debugger;
+              //  showmsg(result)
+             //   alert(result);
+            },
+            error: function (errormessage) {
+                debugger;
+                alert('error');
+            }
+        });
+
+        alert("Stock Added");
+        showtracking();
+    }
+
+    function showtracking() {
+
+      //  $("#dvprofit").toggle();
+        $("#tblprofitstockt").DataTable({
+            "processing": true,
+            "destroy": true,
+            "serverSide": false,
+            "filter": false,
+            "orderMulti": false,
+            "paging": false,
+            "ajax":
+            {
+                "url": "/Home/GetStockTrackingDetails?val=3",
+                "type": "POST",
+                "dataType": "JSON",
+                "dataSrc": function (json) {
+                    debugger;
+                    jsonObj = $.parseJSON(json.data)
+                    //alert(json.data);
+                   // CalculateprofitData(jsonObj);
+                    return jsonObj;
+                }
+            },
+
+            "columns": [
+                { "data": "Sno", "autoWidth": false },
+                { "data": "Script_name", "autoWidth": true },
+
+                { "data": "Date_added", "autoWidth": true },
+                { "data": "current_Price_str", "autoWidth": true },
+
+
+                { "data": "tgt_date", "autoWidth": true },
+                { "data": "notes", "autoWidth": true },
+                         { "data": "tgt_achieve_date", "autoWidth": true },
+                {
+                    "data": "id",
+                    "render": function (data, type, row, meta) {
+                        data = '<a href="#" onclick="return removeid(' + data + ');"> <img src="/images/delete.png" style="height:50px;" /></a>';
+                        return data;
+                    }
+                }
+            ]
+
+        });
+
+        var table = $('#tblprofitstockt').DataTable();
+
+    }
+
+    $("#btnRefresh").click(function () {
+        // GetIndexData();
+      //  alert(1);
+        showtracking();
+
+
+    });
+
+
+    function removeid(id) {
+
+        if (confirm('Are you sure you want to remove?')) {
+
+            $.ajax({
+                type: 'POST',
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                url: '/Home/RemoveTracking/?id=' + id,
+                //  data:  inputval ,
+                data: ({ id: JSON.stringify(id) }),
+                success: function (result) {
+                    //  loadData();
+                },
+                error: function (errormessage) {
+                    alert('error');
+                }
+            });
+        }
+        return false;
+    }
+</script>

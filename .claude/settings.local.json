@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build *)",
+      "Bash(dotnet run *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5134/)",
+      "Bash(curl -s --max-time 600 http://localhost:5134/Orders/RegenerateAllRemarks -o \"C:\\\\Users\\\\ASrock\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\E--Dropbox-projects-Stock-applications-Stock-Application-New-one-StockWebApplications\\\\d7491bd5-a6c7-4442-a501-8a78345a19b8\\\\scratchpad\\\\regen.json\" -w \"HTTP %{http_code}  time=%{time_total}s\\\\n\")",
+      "Bash(taskkill //F //IM dotnet.exe //T)",
+      "Bash(curl -s \"http://localhost:5134/Orders/GetRemarks?strategyId=10\")",
+      "Bash(taskkill //F //IM StockWebApplications.exe //T)",
+      "Bash(ls -la \"C:/Users/ASrock/.claude/projects/E--Claude-code-StockWeb-Application-StockWebApplications/memory/\" 2>&1; echo \"---\"; ls \"C:/Users/ASrock/.claude/projects/\" 2>&1)",
+      "Bash(curl -s -H \"Authorization: token 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\" https://api.github.com/user)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" -H \"Authorization: token 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\" https://api.github.com/repos/siddharthtyagi0078/stock_Application)",
+      "Bash(curl -s -H \"Authorization: token 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\" https://api.github.com/repos/siddharthtyagi0078/stock_Application)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git -c user.email=\"siddhu0siddhu@gmail.com\" -c user.name=\"siddharthtyagi0078\" commit -m \"Initial commit\")"
+    ]
+  }
+}

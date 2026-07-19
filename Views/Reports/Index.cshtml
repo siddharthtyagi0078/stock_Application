@@ -1,0 +1,1001 @@
+﻿@model StockScript
+
+@{
+    ViewData["Title"] = "stock::";
+    Layout =null;//  "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+<script src="//code.jquery.com/jquery-1.10.2.js"></script>
+<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<link href='https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/ui-lightness/jquery-ui.css'
+      rel='stylesheet' />
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js">
+</script>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js">
+</script>
+<link href="~/lib/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
+<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/responsive/2.2.7/js/dataTables.responsive.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.3/css/dataTables.dataTables.min.css">
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous" />
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+<style>
+    table#tblstock {
+        font-weight: bold;
+        font-size: 22px;
+    }
+
+    .downMrktS {
+        background: url(https://images.moneycontrol.com/images/portfolio/opt/portfolio_sprite_v1.gif) -222px 0 no-repeat;
+        width: 13px;
+        height: 12px;
+        display: inline-block;
+    }
+
+    .upMrktS {
+        /*background: url(../../wwwroot/css/up.JPG) -240px 0 no-repeat;*/
+        background: url(https://images.moneycontrol.com/images/portfolio/opt/portfolio_sprite_v1.gif) -240px 0 no-repeat;
+        width: 13px;
+        height: 12px;
+        display: inline-block;
+    }
+
+    .tbl_redtxt {
+        color: red;
+    }
+
+    .tbl_greentxt {
+        color: green;
+    }
+
+</style>
+@*<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>*@
+
+<style>
+    .tabs {
+     
+        width: 100%;
+        text-align: left;
+    }
+
+   
+
+    .tab-nav-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        position: relative !important;
+        z-index: 999 !important;
+        top: 3px;
+    }
+
+    .tabs ul {
+        display: block;
+        /*width: max-content;*/
+        overflow-y: hidden;
+        margin: 0px;
+        padding-inline-start: 5px;
+    }
+
+        .tabs ul li {
+            display: inline-block;
+            border: 1px solid grey;
+            border-bottom: 3px solid grey;
+            background-color: white;
+        }
+
+            .tabs ul li.active {
+                border: 1px solid black;
+                border-bottom: 3px solid white;
+            }
+
+            .tabs ul li a {
+                text-decoration: none;
+                color: grey;
+                padding: 10px;
+                line-height: 25px;
+                position: relative;
+                font-weight: bold;
+            }
+
+    .tab-content-wrapper {
+        position: relative !important;
+        z-index: 1 !important;
+        border: 3px solid grey;
+        padding: 20px;
+        min-height: 40px;
+    }
+
+    select#cmbfyyear {
+        font-weight: bold;
+        font-size:20px;
+    }
+
+
+    #resp-table {
+        width: 100%;
+        display: table;
+    }
+
+    #resp-table-body {
+        display: table-row-group;
+    }
+
+    .resp-table-row {
+        display: table-row;
+    }
+
+    .table-body-cell {
+        display: table-cell;
+        border: 1px solid #dddddd;
+        padding: 8px;
+        line-height: 1.42857143;
+        vertical-align: top;
+    }
+</style>
+<section class="vh-100" >
+    <div>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index"> </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <img src="~/images/logo.jpg" style="height:50px;" />
+                        </li>
+                        <li class="nav-item">
+                            <a href="/Home?val=1" class="nav-link text-dark">Home </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Reports" asp-action="Index">Reports</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="/Nifty50" asp-action="Index">Nifty50</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="/FiiDaily" asp-action="Index">FII Report</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="/portfolio" asp-action="Index">Stock Report</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="/Orders" asp-action="Index">Option Chain</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+
+    </div>
+    <div class="card" style="border-radius: 1rem;">
+        <div class="row g-0">
+
+            <div class="col-md-12  d-flex align-items-center">
+                <div class="tabs">
+                    <div class="tab-nav-wrapper">
+                        <ul>
+                            <li class="active"><a href="#tab1">Add Edit Stock</a></li>
+                            <li><a href="#tab2">Profit report</a></li>
+                            <li><a href="#tab3">Financial Year Summary</a></li>
+                            <li><a href="#tab4">Profit report Monthly</a></li>
+                        </ul>
+                    </div>
+                    <div class="tab-content-wrapper">
+                        <div id="tab1" class="tab-content" style="display:none;">
+                            <div style="display:block;">
+                                <h3>Add Stock</h3>
+                                <form>
+                                    <div class="row">
+                                        <div class="col">
+                                            <input type="text" class="form-control" placeholder="Stock" id="txtStock">
+                                        </div>
+                                        <div class="col">
+                                            <input type="text" class="form-control date-today" placeholder="Date" id="txtStockDate">
+                                        </div>
+                                        <div class="col">
+                                            <input type="text" class="form-control" placeholder="Shares" id="txtShares">
+                                        </div>
+                                        <div class="col">
+                                            <input type="text" class="form-control" placeholder="Price" id="txtPrice">
+                                        </div>
+                                        <div class="col">
+                                            <button type="submit" class="btn btn-primary" onclick="return AddStock();">ADD</button>
+                                        </div>
+                                    </div>
+                                </form>
+
+                            </div>
+                        </div>
+                        <div id="tab2" class="tab-content" style="display:none;">
+                            <div class="row">
+                          
+                                <div class="col" style="    max-width: 40% !important;font-weight:bold; ">
+                                    <select style="height: 50px;" id="cmbfyyear" class="form-control">
+                                    <option value="0">Select financial year</option>
+                                        <option value="2023">2023-2024</option>
+                                    <option value="2024">2024-2025</option>
+                                    <option value="2025">2025-2026</option>
+                                    <option value="2026">2026-2027</option>
+                                   
+                                </select>
+
+                                </div>
+                                <div class="col">
+                                    <input type="text" class="form-control" style="    max-width: 40% !important;font-weight:bold; " placeholder="script" id="txtscript">
+                                </div>
+
+                                <div class="col" style="    max-width: 40% !important;">
+                                <button type="submit" class="btn btn-primary" onclick="return ShowStock();">Show Profit</button>
+                                </div>
+                            </div>
+                            <div id="dvprofit" >
+                                <div style="font:bold 25px Arial;font-weight: bold;margin-right: 50px;margin-top:10px;margin-bottom:10px;">
+                                    <span id="dvtotalprofit"></span>
+                                    <div id="dvtotalprofitsummary"></div>
+
+                                </div>
+
+                                <table class="table table-bordered" style=" font-weight: bold; font-size:22px;" id="tblprofitstock">
+                                    <thead>
+                                        <tr>
+                                            <th  >No.</th>
+                                            <th > Company Sector</th>
+                                              
+
+                                                    <th >
+                                                     Price Buy/Sell</th>
+                                                        
+                                                                <th >
+                                                                    Total P\L</th>
+                                                                    <th >Sold On </th>
+                                        
+
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+
+                            </div>
+                        </div>
+                        <div id="tab3" class="tab-content" style="display:none;">
+                            <div class="row">
+                                <div class="col" style="    max-width: 40% !important;">
+                                    <button type="submit" class="btn btn-primary" onclick="return ShowFyStock();">Report</button>
+                                </div>
+                            </div>
+                            <div id="dvprofit">
+                                <div style="font:bold 25px Arial;font-weight: bold;margin-right: 50px;margin-top:10px;margin-bottom:10px;">
+                                    <span id="dvtotalfyprofit"></span>
+                                    @*<div ></div>*@
+                                    <div id="dvtotalfyprofitsummary"></div>
+
+                                </div>
+ 
+                            </div>
+                        </div>
+                        <div id="tab4" class="tab-content" style="display:none;">
+                            <div>
+                                <div class="row">
+                                    <div class="col">
+
+                                        <select id="cmbmonth" class="form-control">
+                                            <option value="0">Select Month</option>
+                                            <option value="1">January</option>
+                                            <option value="2">February</option>
+                                            <option value="3">March</option>
+                                            <option value="4">April</option>
+                                            <option value="5">May</option>
+                                            <option value="6">June</option>
+                                            <option value="7">July</option>
+                                            <option value="8">August</option>
+                                            <option value="9">September</option>
+                                            <option value="10">October</option>
+                                            <option value="11">November</option>
+                                            <option value="12">December</option>
+                                        </select>
+                                    </div>
+                                    <div class="col">
+
+                                        <select id="cmbyear" class="form-control">
+                                            <option value="0">Select year</option>
+                                            <option value="2023">2023</option>
+                                            <option value="2024">2024</option>
+                                            <option value="2025">2025</option>
+                                            <option value="2026">2026</option>
+                                            <option value="2027">2027</option>
+                                            <option value="2028">2028</option>
+                                            <option value="2029">2029</option>
+                                            <option value="2030">2030</option>
+                                        </select>
+
+                                    </div>
+                                    <div class="col">
+                                        <button onclick="return getReport();" type="submit" class="btn btn-primary">Submit</button>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div id="dvprofitm" style="display:block;">
+                                        <table class="table table-bordered" style=" font-weight: bold; font-size:22px;" id="tblprofitstockm">
+                                            <thead>
+                                                <tr>
+                                                    <th>No.</th>
+                                                    <th>Month/Year</th>
+                                                    <th>Total</th>
+                                                    <th>Dividend</th>
+                                                    <th>Percent(P/L)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                            </tbody>
+                                        </table>
+                                        <table class="table table-bordered" style=" font-weight: bold; font-size:22px;" id="tblp">
+                                            <thead>
+                                                <tr>
+                                                    <th><span id="dvtotalprofitm"></span></th>
+                                                    <th><span id="dvtotaldividend"></span></th>
+                                                    <th><span id="dvnetprofitm"></span></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                            </tbody>
+                                        </table>
+                                     @*   <div style="font:bold 20px Arial;float: right;font-weight: bold;margin-right: 680px;"><span id="dvtotalprofitm"></span></div>
+                                        <div style="font:bold 20px Arial;float: right;font-weight: bold;margin-right: 680px;"><span id="dvtotaldividend"></span></div>
+                                        <div style="font:bold 20px Arial;float: right;font-weight: bold;margin-right: 680px;"><span id="dvnetprofitm"></span></div>
+*@
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+          <div style="display:none">
+            <div class="col-md-12  d-flex align-items-center" style="margin-top:20px;margin-left:30px;">
+                <hr />
+                    <div style="display:block;">
+                        <h3>Add Stock for tracking</h3>
+                        <br />
+                    <br />
+
+                        <form>
+                            <div class="row">
+                                <div class="col">
+                                  <input type="text" class="form-control" placeholder="Stock" id="txtStockt">
+                              @*    @Html.EditorFor(StockScript => StockScript.Code, new { htmlAttributes = new { @class = "form-control" } })*@
+                            </div>
+                            
+                            <div class="col">
+                                <input type="text" class="form-control" value="0" placeholder="Target  Price" id="txtPricet">
+                            </div>
+                                <div class="col">
+                                    <input type="text" class="form-control date-today" placeholder="Target Date" id="txtStockDatet">
+                                </div>
+                                <div class="col">
+                                    <input type="text" class="form-control" height="5" placeholder="notes" id="txtnotes">
+                                </div>
+                              
+                                <div class="col">
+                                    <button type="submit" class="btn btn-primary" onclick="return AddStockt();">ADD</button>
+                                </div>
+                            </div>
+                        </form>
+
+                </div>
+            </div>
+
+            <div class="col-md-12  d-flex align-items-center" style="margin-top:20px;"> <button type="submit" class="btn btn-primary" id="btnRefresh">Show data</button></div>
+            <div class="col-md-12  d-flex align-items-center" style="margin-top:20px;">
+
+                <table class="table table-bordered" style="border: 1px black; font-weight: bold; font-size:22px;width:1800px" id="tblprofitstockt">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>
+                                    Company Sector
+                                </th>
+                                <th>
+                                    Date Added
+                                </th>
+
+                                <th>
+                                    Current Price
+                                </th>
+                                <th>
+                                    Target Price
+                                </th>
+                               
+                                <th>
+                                   Days
+                            </th>
+                            <th>
+                                Target Date
+                            </th>
+                                <th>
+                                    notes
+                                </th>
+                            <th>
+                                Status
+                            </th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+
+
+                    </div>
+
+
+            </div>
+        </div>
+    </div>
+
+</section>
+<script>
+    const month = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    setTimeout($("#btnRefresh").click, 180);
+
+    $(document).ready(function () {
+        $("#txtStockt").autocomplete({
+            source: function (request, response) {
+                $.ajax({
+                    url: "/Reports/Index",
+                    type: "POST",
+                    dataType: "json",
+                    data: { Prefix: request.term },
+                    success: function (data) {
+                        response($.map(data, function (item) {
+                            return { label: item.name, value: item.code };
+                        }))
+                    }
+                })
+            },
+            messages: {
+                noResults: "", results: ""
+            }
+        });
+
+
+         $("#txtscript").autocomplete({
+            source: function (request, response) {
+                $.ajax({
+                    url: "/Reports/Index",
+                    type: "POST",
+                    dataType: "json",
+                    data: { Prefix: request.term },
+                    success: function (data) {
+                        response($.map(data, function (item) {
+                            return { label: item.name, value: item.code };
+                        }))
+                    }
+                })
+            },
+            messages: {
+                noResults: "", results: ""
+            }
+        });
+
+        $("#txtStock").autocomplete({
+            source: function (request, response) {
+                $.ajax({
+                    url: "/Reports/Index",
+                    type: "POST",
+                    dataType: "json",
+                    data: { Prefix: request.term },
+                    success: function (data) {
+                        response($.map(data, function (item) {
+                            return { label: item.name, value: item.code };
+                        }))
+                    }
+                })
+            },
+            messages: {
+                noResults: "", results: ""
+            }
+        });
+    })
+
+    $(document).ready(function () {
+        $(".tab-nav-wrapper li.active").click();
+        $($(".tab-nav-wrapper li.active a").attr("href")).show();
+
+        $(".tab-nav-wrapper li").click(function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            $(".tab-nav-wrapper li").removeClass("active");
+            $(this).addClass("active");
+
+            var target = $(this).find("a").attr("href");
+            $(".tab-content-wrapper").find(".tab-content").hide();
+            $(".tab-content-wrapper").find(target).show();
+
+           
+        })
+    });
+    
+    $(document).ready(function () {
+     
+        var d = new Date();
+        var month = d.getMonth() + 1;
+        var day = d.getDate();
+
+        var output =  (month < 10 ? '0' : '') + month + '/' +
+        (day < 10 ? '0' : '') + day + '/' +
+           
+            d.getFullYear();
+        $("#txtStockDate").datepicker();
+        $("#txtStockDate").val(output);
+        $("#txtStockDatet").datepicker();
+        $("#txtStockDatet").val(output);
+    });
+
+    function getReport() {
+        Showreport();
+    }
+
+    function AddStock() {
+       // debugger;
+        if ($('#txtStock').val() == '') {
+            alert('Please enter stock');
+            $('#txtStock').focus();
+            return false;
+        }
+        if ($('#txtStockDate').val() == '') {
+            alert('Please enter stock date');
+            $('#txtStockDate').focus();
+            return false;
+        }
+        if ($('#txtShares').val() == '') {
+            alert('Please enter shares');
+            $('#txtShares').focus();
+            return false;
+        }
+        if ($('#txtPrice').val() == '') {
+            alert('Please enter price');
+            $('#txtPrice').focus();
+            return false;
+        }
+
+        var jsonInput1 = {
+            Script_code: $('#txtStock').val(),
+            DateAdded: $('#txtStockDate').val(),
+            shares: $('#txtShares').val(),
+            inv_Price: $('#txtPrice').val()
+        };
+
+        var inputval = (JSON.stringify(jsonInput1));
+        //   alert(inputval);
+        $.ajax({
+            type: 'POST',
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            url: '/Home/Add/?jsonInput=' + inputval,
+            //  data:  inputval ,
+            data: ({ jsonInput: JSON.stringify(jsonInput1) }),
+            success: function (result) {
+                //  loadData();
+                debugger;
+                showmsg(result)
+                alert(result);
+            },
+            error: function (errormessage) {
+                debugger;
+                alert('error');
+            }
+        });
+    }
+
+    function showmsg(result) {
+        alert(result);
+    }
+
+    function formatAMPM(date) {
+        var hours = date.getHours();
+        var minutes = date.getMinutes();
+        var ampm = hours >= 12 ? 'pm' : 'am';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        var strTime = hours + ':' + minutes + ' ' + ampm;
+        return strTime;
+    }
+
+    function setstyle(spanid, val) {
+
+        if (val > 0) {
+            $('#' + spanid).attr("style", "color: green");
+            $('#' + spanid + 'a').attr("class", "upMrktS");
+        }
+        else {
+            $('#' + spanid + 'a').attr("style", "color: red");
+            $('#' + spanid + 'a').attr("class", "downMrktS");
+
+        }
+    }
+    var min_value = 0;
+    var max_value = 0;
+    function CalculateprofitData(jsonObj) {
+
+         min_value = 0;
+         max_value = 0;
+        var overallgain = 0;
+        for (i = 0; i < jsonObj.Stocklist.length; i++) {
+
+            overallgain += parseFloat(jsonObj.Stocklist[i].netProfit)+(parseFloat(jsonObj.Stocklist[i].dividend));
+           console.log(jsonObj.Stocklist[i].dividend);
+            if (jsonObj.Stocklist[i].netProfit > max_value) {
+                max_value = jsonObj.Stocklist[i].netProfit;
+              //  max_comp = jsonObj[i].Company_name;
+            }
+            if (jsonObj.Stocklist[i].netProfit < min_value) {
+                min_value = jsonObj.Stocklist[i].netProfit;
+               // min_comp = jsonObj[i].Company_name;
+            }
+        }
+
+
+        if (overallgain > 0) {
+            $('#dvtotalprofit').attr("style", "color: green");
+        }
+        else {
+            $('#dvtotalprofit').attr("style", "color: red");
+
+        }
+        $('#dvtotalprofit').html('Total :- ₹' + overallgain.toLocaleString('en-IN') + ' (' + parseFloat(jsonObj.Stocklist[0].netProfitPercent) + '%)' + " in " + jsonObj.Stocklist.length + " Trades");
+        $('#dvtotalprofitsummary').html(jsonObj.Summary);
+
+    }
+
+      function CalculateFYprofitData(jsonObj) {
+        var htmldata="";
+        for (i = 0; i < jsonObj.length; i++) {
+        htmldata+=   jsonObj[i];
+        }
+        $('#dvtotalfyprofitsummary').html(htmldata);
+      }
+
+    function CalculateprofitDatareport(jsonObj) {
+
+        var overallgain = 0;
+        var overalldividend = 0;
+
+        for (i = 0; i < jsonObj.length; i++) {
+
+            overallgain += parseFloat(jsonObj[i].netProfit);
+            overalldividend += parseFloat(jsonObj[i].dividend);
+
+        }
+        if (overallgain > 0) {
+            $('#dvtotalprofitm').attr("style", "color: green");
+            //  $('#dvtotalprofit').attr("class", "upMrktS");
+        }
+        else {
+            $('#dvtotalprofitm').attr("style", "color: red");
+            //  $('#dvtotalprofit').attr("class", "downMrktS");
+
+        }
+        $('#dvtotalprofitm').text('Total P/L :- ₹' + overallgain.toLocaleString('en-IN'));
+        $('#dvtotaldividend').text('Total Dividend :- ₹' + overalldividend.toLocaleString('en-IN'));
+        $('#dvnetprofitm').text('NET P/L :- ₹' + (overalldividend+overallgain).toLocaleString('en-IN'));
+    }
+
+    function ShowFyStock() {
+
+        $("#tblprofitstock").DataTable({
+            "processing": true,
+            "destroy": true,
+            "serverSide": false,
+            "filter": false,
+            "orderMulti": false,
+            "paging": false,
+            "ajax":
+            {
+                "url": "/Home/GetFySummary/",
+                "type": "POST",
+                "dataType": "JSON",
+                "dataSrc": function (json) {
+                    debugger;
+                    jsonObj = $.parseJSON(json.data)
+                    //alert(json.data);
+                    CalculateFYprofitData(jsonObj);
+                    return jsonObj;
+                }
+            }
+       
+
+        });
+
+        var table = $('#tblprofitstock').DataTable();
+
+    }
+
+    function ShowStock() {
+
+        var year = $('#cmbfyyear').find(":selected").val();
+
+        var jsonInput1 = {
+            year: year,
+              Script_code: $('#txtscript').val()
+
+        };
+        var inputval = (JSON.stringify(jsonInput1));
+      //  $("#dvprofit").toggle();
+        $("#tblprofitstock").DataTable({
+            "processing": true,
+            "destroy": true,
+            "serverSide": false,
+            "filter": false,
+            "orderMulti": false,
+            "paging": false,
+            "ajax":
+            {
+                "url": "/Home/GetprofitStockDetails/?jsonInput=" + inputval,
+                "type": "POST",
+                data: ({ jsonInput: JSON.stringify(jsonInput1) }),
+                "dataType": "JSON",
+                "dataSrc": function (json) {
+                    debugger;
+                    jsonObj = $.parseJSON(json.data)
+                    //alert(json.data);
+                    CalculateprofitData(jsonObj);
+                    return jsonObj.Stocklist;
+                }
+            },
+            rowCallback: function (row, data, index) {
+                if (data["netProfit"] == max_value) {
+                    //   $('td', row).css('background-color', 'lightgreen');
+                    $('td:eq(1)', row).css('background-color', 'lightgreen');
+                }
+                if (data["netProfit"] == min_value) {
+                    // var jj=$('td', row);
+                    //  $('td', row).css('background-color', 'orange');
+                    $('td:eq(1)', row).css('background-color', 'lightcoral');
+                }
+            },
+            "columns": [
+                { "data": "Sno", sWidth: "4%" },
+                { "data": "Name", sWidth: "40%" },
+                { "data": "Price_str", sWidth: "20%" },
+            
+                {
+                    data: 'netProfit', sWidth: "10%",
+                    render: function (data, type) {
+                        if (data <= 0) {
+                            color = 'red';
+                            Class = 'downMrktS';
+                        }
+                        else if (data > 0) {
+                            color = 'Green';
+                            Class = 'upMrktS';
+                        }
+                        return `<span style="color:${color};font-weight: bold;" >₹${data.toLocaleString('en-IN').toLocaleString('en-IN')}</span><span class=${Class}></span>`;
+
+                    }
+                },
+                { "data": "SoldOn", sWidth: "18%" }
+               
+            ]
+
+        });
+
+        var table = $('#tblprofitstock').DataTable();
+
+    }
+
+    function Showreport() {
+
+        var month = $('#cmbmonth').find(":selected").val();
+        var year = $('#cmbyear').find(":selected").val();
+
+
+
+
+        var jsonInput1 = {
+            month: month,
+            year: year
+
+        };
+
+        var inputval = (JSON.stringify(jsonInput1));
+
+
+        //     $("#dvprofitm").toggle();
+        $("#tblprofitstockm").DataTable({
+            "processing": true,
+            "destroy": true,
+            "serverSide": false,
+            "filter": false,
+            "orderMulti": false,
+            "paging": false,
+            "ajax":
+            {
+                "url": '/Home/GetProfitStockReport/?jsonInput=' + inputval,
+                data: ({ jsonInput: JSON.stringify(jsonInput1) }),
+                "type": "POST",
+                "dataType": "JSON",
+                "dataSrc": function (json) {
+                    debugger;
+                    jsonObj = $.parseJSON(json.data)
+                    //alert(json.data);
+                    CalculateprofitDatareport(jsonObj);
+                    return jsonObj;
+                }
+            },
+
+            //   url: '/Home/Add/?jsonInput=' + inputval,
+            //  data:  inputval ,
+
+
+            "columns": [
+                { "data": "Sno", "autoWidth": false },
+                { "data": "month_year", "autoWidth": true },
+
+                {
+                    data: 'netProfit', "autoWidth": true,
+                    render: function (data, type) {
+                        if (data <= 0) {
+                            color = 'red';
+                            Class = 'downMrktS';
+                        }
+                        else if (data > 0) {
+                            color = 'Green';
+                            Class = 'upMrktS';
+                        }
+                        return `<span style="color:${color};font-weight: bold;" >₹${data.toLocaleString('en-IN').toLocaleString('en-IN')}</span><span class=${Class}></span>`;
+
+                    }
+                },
+                { "data": "dividend", "autoWidth": true },
+                {
+                    data: 'Avg_percent', "autoWidth": true,
+                    render: function (data, type) {
+                        if (data <= 0) {
+                            color = 'red';
+                            Class = 'downMrktS';
+                        }
+                        else if (data > 0) {
+                            color = 'Green';
+                            Class = 'upMrktS';
+                        }
+                        return `<span style="color:${color};font-weight: bold;" >${data}%</span><span class=${Class}></span>`;
+
+                    }
+                }
+            ]
+
+        });
+
+        var table = $('#tblprofitstockm').DataTable();
+
+    }
+
+
+    function AddStockt() {
+        debugger;
+        if ($('#txtStockt').val() == '') {
+            alert('Please enter stock');
+            $('#txtStockt').focus();
+            return false;
+        }
+        
+        if ($('#txtPricet').val() == '') {
+            alert('Please enter price');
+            $('#txtPricet').focus();
+            return false;
+        }
+
+        if ($('#txtStockDatet').val() == '') {
+            alert('Please enter stock date');
+            $('#txtStockDatet').focus();
+            return false;
+        }
+        //if ($('#txtShares').val() == '') {
+        //    alert('Please enter shares');
+        //    $('#txtShares').focus();
+        //    return false;
+        //}
+       // alert($('#txtStockDatet').val());
+
+        var jsonInput1 = {
+            Script_code: $('#txtStockt').val(),
+            tgt_Date: $('#txtStockDatet').val(),
+            notes: $('#txtnotes').val(),
+            tgt_Price: $('#txtPricet').val()
+        };
+
+        var inputval = (JSON.stringify(jsonInput1));
+        //   alert(inputval);
+        $.ajax({
+            type: 'POST',
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            url: '/Home/AddTrack/?jsonInput=' + inputval,
+            //  data:  inputval ,
+            data: ({ jsonInput: JSON.stringify(jsonInput1) }),
+            success: function (result) {
+                //  loadData();
+                debugger;
+                showmsg(result)
+                alert(result);
+            },
+            error: function (errormessage) {
+                debugger;
+                alert('error');
+            }
+        });
+        showtracking();
+    }
+
+    function showtracking() {
+
+      //  $("#dvprofit").toggle();
+        $("#tblprofitstockt").DataTable({
+            "processing": true,
+            "destroy": true,
+            "serverSide": false,
+            "filter": false,
+            "orderMulti": false,
+            "paging": false,
+            "ajax":
+            {
+                "url": "/Home/GetStockTrackingDetails?val=1",
+                "type": "POST",
+                "dataType": "JSON",
+                "dataSrc": function (json) {
+                    debugger;
+                    jsonObj = $.parseJSON(json.data)
+                    //alert(json.data);
+                   // CalculateprofitData(jsonObj);
+                    return jsonObj;
+                }
+            },
+
+            "columns": [
+                { "data": "Sno", "autoWidth": false },
+                { "data": "Script_name", "autoWidth": true },
+                { "data": "Date_added", "autoWidth": true },
+                { "data": "current_Price", "autoWidth": true },
+                { "data": "tgt_Price", "autoWidth": true },
+                { "data": "days", "autoWidth": true },
+              
+                { "data": "tgt_date", "autoWidth": true },
+                { "data": "notes", "autoWidth": true },
+                { "data": "tgt_achieve_date", "autoWidth": true }
+            ]
+
+        });
+
+        var table = $('#tblprofitstockt').DataTable();
+
+    }
+
+    $("#btnRefresh").click(function () {
+        // GetIndexData();
+      //  alert(1);
+        showtracking();
+
+
+    });
+</script>
