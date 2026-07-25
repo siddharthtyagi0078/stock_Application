@@ -568,7 +568,15 @@ function toggleStockGrid() {
                     inlinePlCell.text('-').css('color', '');
                 } else {
                     var inlinePlNum = Number(pl);
-                    inlinePlCell.text(inlinePlNum.toFixed(2)).css('color', inlinePlNum >= 0 ? 'green' : 'red');
+                    var entry = Number(inlinePlCell.data('entry')) || 0;
+                    var qty   = Number(inlinePlCell.data('qty'))   || 0;
+                    var basis = entry * qty;
+                    var pctText = '';
+                    if (basis > 0) {
+                        var pct = (inlinePlNum / basis) * 100;
+                        pctText = ' (' + (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%)';
+                    }
+                    inlinePlCell.text(inlinePlNum.toFixed(2) + pctText).css('color', inlinePlNum >= 0 ? 'green' : 'red');
                 }
 
                 // Leg cells exist only while the strategy row is expanded.
@@ -684,11 +692,6 @@ function toggleStockGrid() {
             var last = rows[rows.length - 1];
             $('#niftyEmaStatus').text(rows.length + ' candles · last ' + last.candle + ' · ' + crossCount + ' crossover' + (crossCount === 1 ? '' : 's'));
 
-            // Auto-scroll the latest row into view inside its scroll container.
-            var lastRow = document.getElementById('niftyEmaLastRow');
-            if (lastRow && lastRow.scrollIntoView) {
-                lastRow.scrollIntoView({ block: 'nearest' });
-            }
         }).fail(function () {
             $('#niftyEmaBody').html('<tr><td colspan="5" style="text-align:center;color:#c00;">Fetch failed</td></tr>');
         });
@@ -1035,10 +1038,13 @@ function GettodaysOrder(orders) {
                             (instr ? ' (' + instr + ')' : '') +
                             (actShort ? '<span style="color:' + actColor + '">(' + actShort + ')</span>' : '');
 
+                        var entry = leg.TradePrice != null ? leg.TradePrice : 0;
+                        var qty   = leg.Quantity != null ? leg.Quantity : 0;
+
                         return '<tr>' +
                             '<td style="padding:2px 8px;border:0;">' + expiryText + '</td>' +
                             '<td style="padding:2px 8px;border:0;">' + strikeCell + '</td>' +
-                            '<td style="padding:2px 8px;border:0;"><span class="leg-pl-inline" data-legid="' + leg.LegId + '">-</span></td>' +
+                            '<td style="padding:2px 8px;border:0;"><span class="leg-pl-inline" data-legid="' + leg.LegId + '" data-entry="' + entry + '" data-qty="' + qty + '">-</span></td>' +
                             '</tr>';
 
                     }).join('');

@@ -235,7 +235,7 @@ namespace StockWebApplications.Controllers
         {
             try
             {
-                var dashboard = dataAccess.GetStrategies();
+                var dashboard = dataAccess.GetAllStrategiesWithPL();
                 return Json(dashboard.Masters);
             }
             catch (Exception ex)

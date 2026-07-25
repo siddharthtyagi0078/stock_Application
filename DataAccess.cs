@@ -22,6 +22,41 @@ namespace StockWebApplications
 
 
 
+        // Read pre-computed NIFTY EMA rows written by the Python job. take=0 returns all.
+        public List<AngelOneClient.NiftyEmaRow> GetNiftyEmaFromDb(int take = 0)
+        {
+            var list = new List<AngelOneClient.NiftyEmaRow>();
+            var sql = take > 0
+                ? "SELECT candle, [close], ema10, ema30, trend, is_cross FROM (" +
+                  "  SELECT TOP (@n) candle, candle_ts, [close], ema10, ema30, trend, is_cross " +
+                  "  FROM dbo.nifty_ema_daily ORDER BY candle_ts DESC" +
+                  ") t ORDER BY candle_ts ASC"
+                : "SELECT candle, [close], ema10, ema30, trend, is_cross " +
+                  "FROM dbo.nifty_ema_daily ORDER BY candle_ts";
+            using (var con = new SqlConnection(ConnectioString))
+            using (var cmd = new SqlCommand(sql, con))
+            {
+                if (take > 0) cmd.Parameters.AddWithValue("@n", take);
+                con.Open();
+                using (var rdr = cmd.ExecuteReader())
+                {
+                    while (rdr.Read())
+                    {
+                        list.Add(new AngelOneClient.NiftyEmaRow
+                        {
+                            Candle = Convert.ToString(rdr["candle"]),
+                            Close  = Convert.ToDecimal(rdr["close"]),
+                            Ema10  = Convert.ToDecimal(rdr["ema10"]),
+                            Ema30  = Convert.ToDecimal(rdr["ema30"]),
+                            Trend  = Convert.ToString(rdr["trend"]),
+                            Cross  = Convert.ToBoolean(rdr["is_cross"])
+                        });
+                    }
+                }
+            }
+            return list;
+        }
+
         public StrategyDashboardVM GetStrategies()
         {
             StrategyDashboardVM result = new StrategyDashboardVM();
@@ -143,6 +178,134 @@ namespace StockWebApplications
 
             return result;
         }
+        // Returns EVERY strategy (active + closed), with per-leg realized P/L joined
+        // from shares via shares.legid. Used by the Orders dashboard so users can see
+        // historical strategies alongside live ones.
+        public StrategyDashboardVM GetAllStrategiesWithPL()
+        {
+            var result = new StrategyDashboardVM();
+            var mastersById = new Dictionary<int, StrategyMasterVM>();
+
+            const string masterSql = @"
+                SELECT StrategyId, StrategyName, Symbol, LotSize
+                FROM dbo.OptionStrategy";
+
+            // Guard: the legid column exists only after the migration.
+            bool hasLegId;
+            using (var chk = new SqlConnection(ConnectioString))
+            {
+                chk.Open();
+                using var cmd = new SqlCommand("SELECT COL_LENGTH('dbo.shares','legid')", chk);
+                var res = cmd.ExecuteScalar();
+                hasLegId = res != null && res != DBNull.Value;
+            }
+
+            string legSql = hasLegId
+                ? @"SELECT  l.StrategyLegId AS LegId,
+                            l.StrategyId, l.LegNo, l.ActionType, l.InstrumentType,
+                            l.StrikePrice, l.ExpiryDate, l.TradePrice, l.Quantity,
+                            l.isactive AS IsActive,
+                            sh.sell_price AS ExitPrice,
+                            sh.inv_Price  AS SharesInvPrice,
+                            sh.shares     AS SharesQty
+                    FROM dbo.OptionStrategyLeg l
+                    LEFT JOIN dbo.shares sh ON sh.legid = l.StrategyLegId
+                    ORDER BY l.StrategyId, l.LegNo"
+                : @"SELECT  l.StrategyLegId AS LegId,
+                            l.StrategyId, l.LegNo, l.ActionType, l.InstrumentType,
+                            l.StrikePrice, l.ExpiryDate, l.TradePrice, l.Quantity,
+                            l.isactive AS IsActive,
+                            CAST(NULL AS DECIMAL(18,2)) AS ExitPrice,
+                            CAST(NULL AS DECIMAL(18,2)) AS SharesInvPrice,
+                            CAST(NULL AS INT)          AS SharesQty
+                    FROM dbo.OptionStrategyLeg l
+                    ORDER BY l.StrategyId, l.LegNo";
+
+            using (var con = new SqlConnection(ConnectioString))
+            {
+                con.Open();
+
+                using (var cmd = new SqlCommand(masterSql, con))
+                using (var rdr = cmd.ExecuteReader())
+                {
+                    while (rdr.Read())
+                    {
+                        var m = new StrategyMasterVM
+                        {
+                            StrategyId   = Convert.ToInt32(rdr["StrategyId"]),
+                            StrategyName = Convert.ToString(rdr["StrategyName"]),
+                            Symbol       = Convert.ToString(rdr["Symbol"]),
+                            LotSize      = Convert.ToInt32(rdr["LotSize"]),
+                            ExpiryDate   = DateTime.MinValue
+                        };
+                        mastersById[m.StrategyId] = m;
+                    }
+                }
+
+                using (var cmd = new SqlCommand(legSql, con))
+                using (var rdr = cmd.ExecuteReader())
+                {
+                    while (rdr.Read())
+                    {
+                        int sid = Convert.ToInt32(rdr["StrategyId"]);
+                        if (!mastersById.TryGetValue(sid, out var master)) continue;
+
+                        var leg = new StrategyLegVM
+                        {
+                            LegId          = Convert.ToInt32(rdr["LegId"]),
+                            StrategyId     = sid,
+                            LegNo          = Convert.ToInt32(rdr["LegNo"]),
+                            ActionType     = Convert.ToString(rdr["ActionType"]),
+                            InstrumentType = Convert.ToString(rdr["InstrumentType"]),
+                            StrikePrice    = rdr["StrikePrice"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(rdr["StrikePrice"]),
+                            ExpiryDate     = rdr["ExpiryDate"]  == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(rdr["ExpiryDate"]),
+                            TradePrice     = Convert.ToDecimal(rdr["TradePrice"]),
+                            Quantity       = Convert.ToInt32(rdr["Quantity"]),
+                            IsActive       = Convert.ToBoolean(rdr["IsActive"]),
+                            ExitPrice      = rdr["ExitPrice"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(rdr["ExitPrice"])
+                        };
+
+                        if (!leg.IsActive && rdr["ExitPrice"] != DBNull.Value && rdr["SharesInvPrice"] != DBNull.Value)
+                        {
+                            // usp_ExitPosition already sign-maps sell_price/inv_Price so
+                            // (sell_price - inv_Price) * qty is the realized profit.
+                            var sell = Convert.ToDecimal(rdr["ExitPrice"]);
+                            var inv  = Convert.ToDecimal(rdr["SharesInvPrice"]);
+                            var qty  = rdr["SharesQty"] == DBNull.Value ? leg.Quantity : Convert.ToInt32(rdr["SharesQty"]);
+                            leg.PL = (sell - inv) * qty;
+                        }
+
+                        master.Legs.Add(leg);
+                        result.Legs.Add(leg);
+                    }
+                }
+            }
+
+            // Aggregate per strategy.
+            foreach (var master in mastersById.Values)
+            {
+                master.TotalLegs = master.Legs.Count;
+                master.IsActive  = master.Legs.Any(l => l.IsActive);
+                master.TotalPL   = master.Legs.Sum(l => l.PL);
+
+                master.TotalPremium = master.Legs
+                    .Where(l => string.Equals(l.ActionType, "SELL", StringComparison.OrdinalIgnoreCase))
+                    .Sum(l => l.TradePrice);
+
+                var expiries = master.Legs.Where(l => l.ExpiryDate.HasValue).Select(l => l.ExpiryDate.Value).ToList();
+                if (expiries.Count > 0) master.ExpiryDate = expiries.Min();
+            }
+
+            // Active first, then closed; each group by StrategyId desc (newest first).
+            result.Masters = mastersById.Values
+                .Where(m => m.Legs.Count > 0)
+                .OrderByDescending(m => m.IsActive)
+                .ThenByDescending(m => m.StrategyId)
+                .ToList();
+
+            return result;
+        }
+
         public void ExitPosition(int legId, decimal exitPrice)
         {
             using (SqlConnection con = new SqlConnection(ConnectioString))

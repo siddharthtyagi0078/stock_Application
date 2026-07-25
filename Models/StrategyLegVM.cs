@@ -19,5 +19,13 @@
         public decimal TradePrice { get; set; }
 
         public int Quantity { get; set; }
+
+        public bool IsActive { get; set; }
+
+        // Exit price recorded in shares (null for still-open legs).
+        public decimal? ExitPrice { get; set; }
+
+        // Realized P/L for this leg (0 for still-open legs).
+        public decimal PL { get; set; }
     }
 }

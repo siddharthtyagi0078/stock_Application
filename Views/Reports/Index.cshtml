@@ -141,6 +141,50 @@
         line-height: 1.42857143;
         vertical-align: top;
     }
+
+    /* Profit & Loss Details card */
+    .pnl-card { background:#fff; border:1px solid #e6e6ef; border-radius:8px; padding:18px 22px; box-shadow:0 1px 2px rgba(0,0,0,.03); }
+    .pnl-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px; }
+    .pnl-title { font-size:18px; font-weight:600; color:#1a1a2e; }
+    .pnl-range { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .pnl-range-label { color:#666; font-size:14px; margin-right:4px; }
+    .pnl-chip { border:1px solid #e0e0e8; background:#fff; color:#333; padding:6px 14px; border-radius:6px; font-size:13px; cursor:pointer; }
+    .pnl-chip:hover { background:#f5f5fa; }
+    .pnl-chip.active { background:#eef1ff; border-color:#6b7cff; color:#4a5ae8; font-weight:600; }
+    .pnl-custom-date { border:1px solid #e0e0e8; border-radius:6px; padding:5px 8px; font-size:13px; width:110px; }
+    .pnl-download { margin-left:8px; border:1.5px solid #4a5ae8; background:#fff; color:#4a5ae8; padding:6px 16px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; letter-spacing:.3px; }
+    .pnl-download:hover { background:#eef1ff; }
+
+    .pnl-summary { display:flex; gap:0; border-top:1px solid #eee; border-bottom:1px solid #eee; padding:14px 0; }
+    .pnl-summary-item { flex:1; display:flex; align-items:center; gap:12px; padding:0 20px; border-right:1px solid #f0f0f0; }
+    .pnl-summary-item:last-child { border-right:none; }
+    .pnl-summary-icon { width:36px; height:36px; border-radius:50%; background:#e8f5ee; color:#2d9d5f; display:flex; align-items:center; justify-content:center; font-weight:700; }
+    .pnl-summary-label { color:#666; font-size:13px; }
+    .pnl-summary-value { font-size:17px; font-weight:700; color:#1a1a2e; margin-top:2px; }
+
+    .pnl-range-display { text-align:center; margin:14px 0 8px; }
+    .pnl-range-display span { display:inline-block; background:#eaf6ef; color:#2d9d5f; padding:6px 18px; border-radius:20px; font-size:13px; font-weight:500; }
+
+    .pnl-calendar-wrapper { overflow-x:auto; padding:14px 0 20px; }
+    .pnl-calendar { display:flex; gap:4px; min-width:1200px; border-bottom:2px solid #b8d8c4; padding-bottom:36px; position:relative; }
+    .pnl-month { flex:1; min-width:150px; text-align:center; position:relative; padding:0 6px; }
+    .pnl-month-label { font-size:16px; color:#555; margin-bottom:12px; font-weight:600; }
+    .pnl-month-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; padding:0 10px; }
+    .pnl-day { width:14px; height:14px; border-radius:50%; background:#eef0f4; margin:auto; }
+    .pnl-day.profit-sm { background:#a3d9b6; }
+    .pnl-day.profit-md { background:#4fb977; }
+    .pnl-day.profit-lg { background:#2d9d5f; }
+    .pnl-day.loss-sm  { background:#f4b0b0; }
+    .pnl-day.loss-md  { background:#e56b6b; }
+    .pnl-day.loss-lg  { background:#c62828; }
+    .pnl-month-total { position:absolute; bottom:-30px; left:0; right:0; text-align:center; font-size:15px; font-weight:700; }
+    .pnl-month-total.profit { color:#2d9d5f; }
+    .pnl-month-total.loss { color:#c62828; }
+
+    .pnl-legend { margin-top:14px; text-align:right; font-size:12px; color:#666; }
+    .pnl-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin:0 3px; vertical-align:middle; }
+    .pnl-dot-loss { background:#e56b6b; }
+    .pnl-dot-profit { background:#2d9d5f; }
 </style>
 <section class="vh-100" >
     <div>
@@ -230,7 +274,11 @@
                                     <option value="2024">2024-2025</option>
                                     <option value="2025">2025-2026</option>
                                     <option value="2026">2026-2027</option>
-                                   
+                                    <option value="2027">2027-2028</option>
+                                    <option value="2028">2028-2029</option>
+                                    <option value="2029">2029-2030</option>
+                                    <option value="2030">2030-2031</option>
+                                    <option value="2031">2031-2032</option>
                                 </select>
 
                                 </div>
@@ -369,6 +417,42 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Profit and Loss Details (calendar view) -->
+            <div class="col-md-12" style="margin-top:16px;">
+                <div class="pnl-card">
+                    <div class="pnl-header">
+                        <div class="pnl-title">Profit and Loss Details</div>
+                        <div class="pnl-range">
+                            <span class="pnl-range-label">Date Range:</span>
+                            <button type="button" class="pnl-chip" data-range="week">Week</button>
+                            <button type="button" class="pnl-chip" data-range="15d">15 Days</button>
+                            <button type="button" class="pnl-chip" data-range="month">Month</button>
+                            <button type="button" class="pnl-chip" data-range="3m">3 Months</button>
+                            <button type="button" class="pnl-chip active" data-range="year">Year</button>
+                            <button type="button" class="pnl-chip" data-range="custom">Custom</button>
+                            <input type="text" id="pnlCustomFrom" class="pnl-custom-date" placeholder="From" style="display:none;" />
+                            <input type="text" id="pnlCustomTo" class="pnl-custom-date" placeholder="To" style="display:none;" />
+                            <button type="button" class="pnl-download" onclick="downloadPnlCsv();">DOWNLOAD P/L STATEMENT</button>
+                        </div>
+                    </div>
+
+                    <div class="pnl-range-display">
+                        <span id="pnlRangeText"></span>
+                    </div>
+
+                    <div class="pnl-calendar-wrapper">
+                        <div class="pnl-calendar" id="pnlCalendar"></div>
+                    </div>
+
+                    <div class="pnl-legend">
+                        <span class="pnl-dot pnl-dot-loss"></span>
+                        <span class="pnl-dot pnl-dot-profit"></span>
+                        What do these circles indicate?
+                    </div>
+                </div>
+            </div>
+
           <div style="display:none">
             <div class="col-md-12  d-flex align-items-center" style="margin-top:20px;margin-left:30px;">
                 <hr />
@@ -997,5 +1081,154 @@
         showtracking();
 
 
+    });
+
+    // ---------- Profit & Loss calendar ----------
+    var pnlRows = [];  // last-loaded rows
+
+    function fmtInr(n) {
+        var sign = n < 0 ? '-' : '';
+        return sign + '₹' + Math.abs(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    function fmtDate(d) {
+        var dd = String(d.getDate()).padStart(2,'0');
+        var mm = String(d.getMonth()+1).padStart(2,'0');
+        return d.getFullYear() + '-' + mm + '-' + dd;
+    }
+    function fmtDisplay(d) {
+        var mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return d.getDate() + ' ' + mo[d.getMonth()] + ' ' + d.getFullYear();
+    }
+    function computeRange(kind) {
+        var to = new Date();
+        var from = new Date();
+        if (kind === 'week') from.setDate(to.getDate() - 6);
+        else if (kind === '15d') from.setDate(to.getDate() - 14);
+        else if (kind === 'month') from.setMonth(to.getMonth() - 1);
+        else if (kind === '3m') from.setMonth(to.getMonth() - 3);
+        else if (kind === 'year') from.setFullYear(to.getFullYear() - 1);
+        return { from: from, to: to };
+    }
+
+    function loadPnl(from, to) {
+        $('#pnlRangeText').text(fmtDisplay(from) + ' - ' + fmtDisplay(to));
+        $.ajax({
+            url: '/Home/GetPnlCalendar',
+            type: 'GET',
+            dataType: 'json',
+            data: { fromDate: fmtDate(from), toDate: fmtDate(to) },
+            success: function (res) {
+                if (!res || !res.ok) { pnlRows = []; renderPnl(from, to); return; }
+                pnlRows = res.rows || [];
+                renderPnl(from, to);
+            },
+            error: function () { pnlRows = []; renderPnl(from, to); }
+        });
+    }
+
+    function renderPnl(from, to) {
+        // aggregate by day
+        var byDay = {};
+        var realized = 0;
+        for (var i = 0; i < pnlRows.length; i++) {
+            var r = pnlRows[i];
+            var pl = parseFloat(r.netProfit) || 0;
+            realized += pl;
+            byDay[r.date] = (byDay[r.date] || 0) + pl;
+        }
+        var charges = 0; // placeholder — no per-trade charge data yet
+        var net = realized - charges;
+
+        $('#pnlRealized').text(fmtInr(realized)).css('color', realized >= 0 ? '#2d9d5f' : '#c62828');
+        $('#pnlCharges').text(fmtInr(charges));
+        $('#pnlNet').text(fmtInr(net)).css('color', net >= 0 ? '#2d9d5f' : '#c62828');
+
+        // build month buckets between from..to
+        var months = [];
+        var cur = new Date(from.getFullYear(), from.getMonth(), 1);
+        var end = new Date(to.getFullYear(), to.getMonth(), 1);
+        while (cur <= end) {
+            months.push({ y: cur.getFullYear(), m: cur.getMonth() });
+            cur.setMonth(cur.getMonth() + 1);
+        }
+
+        var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var $cal = $('#pnlCalendar').empty();
+
+        for (var j = 0; j < months.length; j++) {
+            var mo = months[j];
+            var daysInMonth = new Date(mo.y, mo.m + 1, 0).getDate();
+            var monthTotal = 0;
+            var grid = '';
+            for (var d = 1; d <= daysInMonth; d++) {
+                // Skip Saturday (6) and Sunday (0) — Indian equity market is closed.
+                var dow = new Date(mo.y, mo.m, d).getDay();
+                if (dow === 0 || dow === 6) continue;
+
+                var key = mo.y + '-' + String(mo.m + 1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+                var v = byDay[key] || 0;
+                monthTotal += v;
+                var cls = 'pnl-day';
+                if (v > 0) {
+                    var av = Math.abs(v);
+                    if (av > 5000) cls += ' profit-lg';
+                    else if (av > 1000) cls += ' profit-md';
+                    else cls += ' profit-sm';
+                } else if (v < 0) {
+                    var av2 = Math.abs(v);
+                    if (av2 > 5000) cls += ' loss-lg';
+                    else if (av2 > 1000) cls += ' loss-md';
+                    else cls += ' loss-sm';
+                }
+                grid += '<div class="' + cls + '" title="' + key + ': ' + fmtInr(v) + '"></div>';
+            }
+            var totalCls = monthTotal >= 0 ? 'profit' : 'loss';
+            var totalText = monthTotal === 0 ? '' : fmtInr(monthTotal);
+            var label = monthNames[mo.m] + ' ' + String(mo.y).slice(-2);
+            $cal.append(
+                '<div class="pnl-month">' +
+                    '<div class="pnl-month-label">' + label + '</div>' +
+                    '<div class="pnl-month-grid">' + grid + '</div>' +
+                    '<div class="pnl-month-total ' + totalCls + '">' + totalText + '</div>' +
+                '</div>'
+            );
+        }
+    }
+
+    function downloadPnlCsv() {
+        if (!pnlRows.length) { alert('No data to download for the current range.'); return; }
+        var lines = ['Date,Name,NetProfit,Dividend'];
+        for (var i = 0; i < pnlRows.length; i++) {
+            var r = pnlRows[i];
+            lines.push([r.date, '"' + (r.name || '').replace(/"/g,'""') + '"', r.netProfit, r.dividend].join(','));
+        }
+        var blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = 'pl_statement.csv';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+
+    $(document).ready(function () {
+        $('.pnl-chip').click(function () {
+            $('.pnl-chip').removeClass('active');
+            $(this).addClass('active');
+            var kind = $(this).data('range');
+            if (kind === 'custom') {
+                $('#pnlCustomFrom, #pnlCustomTo').show();
+                $('#pnlCustomFrom, #pnlCustomTo').datepicker({ dateFormat: 'mm/dd/yy' });
+                return;
+            }
+            $('#pnlCustomFrom, #pnlCustomTo').hide();
+            var r = computeRange(kind);
+            loadPnl(r.from, r.to);
+        });
+        $('#pnlCustomFrom, #pnlCustomTo').change(function () {
+            var f = $('#pnlCustomFrom').val(), t = $('#pnlCustomTo').val();
+            if (f && t) loadPnl(new Date(f), new Date(t));
+        });
+        // initial load: Year
+        var r0 = computeRange('year');
+        loadPnl(r0.from, r0.to);
     });
 </script>

@@ -14,7 +14,21 @@
       "Bash(curl -s -H \"Authorization: token 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\" https://api.github.com/repos/siddharthtyagi0078/stock_Application)",
       "Bash(git init *)",
       "Bash(git add *)",
-      "Bash(git -c user.email=\"siddhu0siddhu@gmail.com\" -c user.name=\"siddharthtyagi0078\" commit -m \"Initial commit\")"
+      "Bash(git -c user.email=\"siddhu0siddhu@gmail.com\" -c user.name=\"siddharthtyagi0078\" commit -m \"Initial commit\")",
+      "Bash(git remote *)",
+      "Bash(nslookup s.ifuturecorporation.com)",
+      "Bash(dotnet publish *)",
+      "Bash(curl -s https://s.ifuturecorporation.com/)",
+      "Bash(ls -la \"E:/Claude code/web/\" 2>&1)",
+      "Bash(powershell -Command \"\\(Get-Item 'System.Text.Encodings.Web.dll'\\).VersionInfo.FileVersion; \\(Get-Item 'System.Text.Json.dll'\\).VersionInfo.FileVersion\")",
+      "Bash(powershell -Command \"\\(Get-Item 'System.Data.SqlClient.dll'\\).VersionInfo.FileVersion; \\(Get-Item 'System.Data.SqlClient.dll'\\).Length\")",
+      "Bash(python fetch_nifty_ema.py)",
+      "PowerShell(dotnet publish \"E:\\\\Claude code\\\\StockWeb Application\\\\StockWebApplications\\\\StockWebApplications.csproj\" -c Release -o \"E:\\\\Claude code\\\\StockWeb Application\\\\StockWebApplications\\\\publish\")",
+      "PowerShell(Get-ChildItem \"E:\\\\Claude code\\\\StockWeb Application\\\\StockWebApplications\\\\publish\" | Select-Object Name, Length | Format-Table -AutoSize; Write-Output \"---\"; Write-Output \"Total items: $\\(\\(Get-ChildItem 'E:\\\\Claude code\\\\StockWeb Application\\\\StockWebApplications\\\\publish' -Recurse -File\\).Count\\) files\")",
+      "PowerShell(git -C \"E:\\\\Claude code\\\\StockWeb Application\\\\StockWebApplications\" remote -v)",
+      "PowerShell(git -C \"E:\\\\Claude code\\\\StockWeb Application\\\\StockWebApplications\" status --short)",
+      "PowerShell(git -C \"E:\\\\Claude code\\\\StockWeb Application\\\\StockWebApplications\" branch -vv)",
+      "PowerShell(git -C \"E:\\\\Claude code\\\\StockWeb Application\\\\StockWebApplications\" add -A)"
     ]
   }
 }

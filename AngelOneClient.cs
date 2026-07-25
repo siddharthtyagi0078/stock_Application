@@ -131,7 +131,14 @@ namespace StockWebApplications
                     continue;
                 }
 
-                var json = JObject.Parse(text);
+                JObject json;
+                try { json = JObject.Parse(text); }
+                catch (Exception parseEx)
+                {
+                    var snippet = (text ?? "").Trim();
+                    if (snippet.Length > 400) snippet = snippet.Substring(0, 400);
+                    throw new Exception($"Angel One returned non-JSON. HTTP {(int)resp.StatusCode} {resp.StatusCode}. Body: {snippet}", parseEx);
+                }
 
                 if (json["status"]?.Value<bool>() != true)
                 {
@@ -220,7 +227,14 @@ namespace StockWebApplications
                     continue;
                 }
 
-                var json = JObject.Parse(text);
+                JObject json;
+                try { json = JObject.Parse(text); }
+                catch (Exception parseEx)
+                {
+                    var snippet = (text ?? "").Trim();
+                    if (snippet.Length > 400) snippet = snippet.Substring(0, 400);
+                    throw new Exception($"Angel One returned non-JSON. HTTP {(int)resp.StatusCode} {resp.StatusCode}. Body: {snippet}", parseEx);
+                }
 
                 if (json["status"]?.Value<bool>() != true)
                 {
@@ -351,7 +365,14 @@ namespace StockWebApplications
                 var resp = await http.SendAsync(req);
                 var text = await resp.Content.ReadAsStringAsync();
 
-                var json = JObject.Parse(text);
+                JObject json;
+                try { json = JObject.Parse(text); }
+                catch (Exception parseEx)
+                {
+                    var snippet = (text ?? "").Trim();
+                    if (snippet.Length > 400) snippet = snippet.Substring(0, 400);
+                    throw new Exception($"Angel One returned non-JSON. HTTP {(int)resp.StatusCode} {resp.StatusCode}. Body: {snippet}", parseEx);
+                }
 
                 if (json["status"]?.Value<bool>() == true)
                 {

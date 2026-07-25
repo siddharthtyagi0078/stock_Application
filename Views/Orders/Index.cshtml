@@ -284,6 +284,16 @@
         box-shadow: 0px 3px 12px rgba(0,0,0,.15);
     }
 
+    /* Closed strategies rendered in light grey */
+    #tblStrategies tbody tr.strategy-closed > td {
+        background-color: #f0f0f0;
+        color: #666;
+    }
+
+    #tblStrategies tbody tr.strategy-closed:hover > td {
+        background-color: #e8e8e8;
+    }
+
 </style>
 
 <div>
@@ -532,8 +542,16 @@
     ====================================================== -->
     <div class="card shadow mt-4">
 
-        <div class="card-header bg-primary text-white">
-            <h4>Strategies</h4>
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Strategies</h4>
+            <div class="d-flex gap-2">
+                <button type="button" id="btnRefreshStrategies" class="btn btn-light btn-sm" title="Refresh">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+                <button type="button" id="btnExportStrategies" class="btn btn-success btn-sm" title="Export to Excel">
+                    <i class="fas fa-file-excel"></i> Export
+                </button>
+            </div>
         </div>
 
         <div class="card-body">
@@ -547,10 +565,17 @@
                         <th>Expiry</th>
                         <th>Lot</th>
                         <th>Legs</th>
-                        <th>Premium</th>
+                        <th>State</th>
+                        <th>Total P/L</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="7" class="text-end">Total P/L (Closed):</th>
+                        <th id="tblStrategiesGrandPL"></th>
+                    </tr>
+                </tfoot>
             </table>
 
         </div>
@@ -562,9 +587,34 @@
 
 <script>
 
+    // holds the last loaded strategies list (used by the Excel export)
+    var _strategiesData = [];
+
     $(document).ready(function () {
 
         LoadStrategies();
+
+        //---------------------------------------------------------
+        // Refresh / reload the strategies grid
+        //---------------------------------------------------------
+
+        $("#btnRefreshStrategies").click(function () {
+            var btn = $(this);
+            var original = btn.html();
+            btn.prop("disabled", true).html("<i class='fas fa-sync-alt fa-spin'></i> Refreshing...");
+            LoadStrategies();
+            setTimeout(function () {
+                btn.prop("disabled", false).html(original);
+            }, 500);
+        });
+
+        //---------------------------------------------------------
+        // Export the strategies grid to Excel
+        //---------------------------------------------------------
+
+        $("#btnExportStrategies").click(function () {
+            ExportStrategiesToExcel();
+        });
 
         //---------------------------------------------------------
         // Copy Lot Size to Qty
@@ -908,17 +958,110 @@
         return dt.toISOString().substring(0, 10);
     }
 
+    //---------------------------------------------------------
+    // Export strategies grid to Excel (.xls via HTML table)
+    //---------------------------------------------------------
+
+    function ExportStrategiesToExcel() {
+
+        if (!_strategiesData || !_strategiesData.length) {
+            alert("No strategies to export.");
+            return;
+        }
+
+        var rows = "";
+        var grandPL = 0;
+
+        $.each(_strategiesData, function (i, s) {
+
+            var name = s.strategyName || s.StrategyName || "";
+            var symbol = s.symbol || s.Symbol || "";
+            var expiry = s.expiryDate || s.ExpiryDate;
+            var lot = s.lotSize != null ? s.lotSize : s.LotSize;
+            var legs = s.legs || s.Legs || [];
+            var isActive = (s.isActive != null ? s.isActive : s.IsActive) === true;
+            var totalPL = s.totalPl != null ? s.totalPl : (s.totalPL != null ? s.totalPL : (s.TotalPL != null ? s.TotalPL : 0));
+            grandPL += Number(totalPL) || 0;
+
+            var closedLegs = 0;
+            var costBasis = 0;
+            $.each(legs, function (_, lg) {
+                var la = (lg.isActive != null ? lg.isActive : lg.IsActive) === true;
+                if (!la) {
+                    closedLegs++;
+                    var tp = lg.tradePrice != null ? lg.tradePrice : lg.TradePrice;
+                    var q = lg.quantity != null ? lg.quantity : lg.Quantity;
+                    costBasis += Math.abs((Number(tp) || 0) * (Number(q) || 0));
+                }
+            });
+            var pctText = costBasis > 0
+                ? " (" + (Number(totalPL) / costBasis * 100).toFixed(2) + "%)"
+                : "";
+
+            rows += "<tr>";
+            rows += "<td>" + escapeHtml(name) + "</td>";
+            rows += "<td>" + escapeHtml(symbol) + "</td>";
+            rows += "<td>" + fmtDate(expiry) + "</td>";
+            rows += "<td>" + (lot != null ? lot : "") + "</td>";
+            rows += "<td>" + legs.length + " / " + closedLegs + " closed</td>";
+            rows += "<td>" + (isActive ? "Active" : "Closed") + "</td>";
+            rows += "<td>" + Number(totalPL).toFixed(2) + pctText + "</td>";
+            rows += "</tr>";
+        });
+
+        var table = "";
+        table += "<table border='1'>";
+        table += "<thead><tr>";
+        table += "<th>Strategy</th><th>Symbol</th><th>Expiry</th><th>Lot</th><th>Legs</th><th>State</th><th>Total P/L</th>";
+        table += "</tr></thead>";
+        table += "<tbody>" + rows + "</tbody>";
+        table += "<tfoot><tr><th colspan='6' style='text-align:right;'>Total P/L (All):</th><th>" + Number(grandPL).toFixed(2) + "</th></tr></tfoot>";
+        table += "</table>";
+
+        // Excel opens a bare HTML table directly; prepend a BOM so UTF-8 is detected.
+        var blob = new Blob(["﻿" + table], { type: "application/vnd.ms-excel" });
+        var fileName = "Strategies_" + new Date().toISOString().substring(0, 10) + ".xls";
+
+        var link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+    }
+
+    function escapeHtml(str) {
+        if (str == null) return "";
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+    }
+
     function LoadStrategies() {
 
         $.getJSON('@Url.Action("GetStrategies", "Orders")', function (data) {
 
+            // keep the raw list for Excel export
+            _strategiesData = ($.isArray(data)) ? data : [];
+
             var tbody = $('#tblStrategies tbody');
             tbody.empty();
 
-            if (!data || !data.length) {
-                tbody.append('<tr><td colspan="7" class="text-center">No strategies found.</td></tr>');
+            // Server returned {error: "..."} instead of an array
+            if (data && !$.isArray(data) && (data.error || data.Error)) {
+                var msg = data.error || data.Error;
+                tbody.append('<tr><td colspan="8" class="text-center" style="color:#c00;">Load failed: ' + msg + '</td></tr>');
                 return;
             }
+
+            if (!data || !data.length) {
+                tbody.append('<tr><td colspan="8" class="text-center">No strategies found.</td></tr>');
+                return;
+            }
+
+            var grandPL = 0;
 
             $.each(data, function (i, s) {
 
@@ -929,25 +1072,55 @@
                 var lot = s.lotSize != null ? s.lotSize : s.LotSize;
                 var legs = s.legs || s.Legs || [];
                 var premium = s.totalPremium != null ? s.totalPremium : s.TotalPremium;
+                var isActive = (s.isActive != null ? s.isActive : s.IsActive) === true;
+                var totalPL = s.totalPl != null ? s.totalPl : (s.totalPL != null ? s.totalPL : (s.TotalPL != null ? s.TotalPL : 0));
+                grandPL += Number(totalPL) || 0;
+                var plColor = totalPL > 0 ? 'green' : (totalPL < 0 ? 'red' : '#555');
+
+                // P/L % against the cost basis of the closed legs (tradePrice * qty),
+                // which is the capital that produced the realized P/L.
+                var costBasis = 0;
+                $.each(legs, function (_, lg) {
+                    var la = (lg.isActive != null ? lg.isActive : lg.IsActive) === true;
+                    if (!la) {
+                        var tp = lg.tradePrice != null ? lg.tradePrice : lg.TradePrice;
+                        var q = lg.quantity != null ? lg.quantity : lg.Quantity;
+                        costBasis += Math.abs((Number(tp) || 0) * (Number(q) || 0));
+                    }
+                });
+                var pctText = costBasis > 0
+                    ? " (" + (Number(totalPL) / costBasis * 100).toFixed(2) + "%)"
+                    : "";
+
+                var plText  = '&#8377; ' + Number(totalPL).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + pctText;
+                var stateBadge = isActive
+                    ? "<span class='badge bg-success'>Active</span>"
+                    : "<span class='badge bg-secondary'>Closed</span>";
 
                 var row = "";
-                row += "<tr>";
+                row += "<tr class='" + (isActive ? "strategy-active" : "strategy-closed") + "'>";
                 row += "<td class='text-center'><button type='button' class='btn btn-sm btn-primary btnToggleLegs' data-strategyid='" + sid + "'>+</button></td>";
                 row += "<td>" + name + "</td>";
                 row += "<td>" + symbol + "</td>";
                 row += "<td>" + fmtDate(expiry) + "</td>";
                 row += "<td>" + lot + "</td>";
-                row += "<td>" + legs.length + "</td>";
-                row += "<td><span style='font-weight:bold;color:green;'>&#8377; " + premium + "</span></td>";
+                var closedLegs = 0;
+                $.each(legs, function (_, lg) {
+                    var la = (lg.isActive != null ? lg.isActive : lg.IsActive) === true;
+                    if (!la) closedLegs++;
+                });
+                row += "<td>" + legs.length + " / <span style='color:#666;'>" + closedLegs + " closed</span></td>";
+                row += "<td>" + stateBadge + "</td>";
+                row += "<td><span style='font-weight:bold;color:" + plColor + ";'>" + plText + "</span></td>";
                 row += "</tr>";
 
                 // hidden legs panel
                 var panel = "";
-                panel += "<tr class='legs-panel' data-strategyid='" + sid + "' style='display:none;'>";
-                panel += "<td colspan='7'>";
+                panel += "<tr class='legs-panel " + (isActive ? "" : "closed-panel") + "' data-strategyid='" + sid + "' style='display:none;'>";
+                panel += "<td colspan='8'>";
                 panel += "<table class='table table-sm table-bordered mb-0'>";
                 panel += "<thead class='table-light'><tr>";
-                panel += "<th>Leg</th><th>Action</th><th>Instrument</th><th>Expiry</th><th>Strike</th><th>Trade Price</th><th>Qty</th><th width='90'></th>";
+                panel += "<th>Leg</th><th>Action</th><th>Instrument</th><th>Expiry</th><th>Strike</th><th>Trade Price</th><th>Qty</th><th>Exit</th><th>P/L</th><th width='90'></th>";
                 panel += "</tr></thead><tbody>";
 
                 $.each(legs, function (j, leg) {
@@ -960,10 +1133,26 @@
                     var strike = leg.strikePrice != null ? leg.strikePrice : leg.StrikePrice;
                     var price = leg.tradePrice != null ? leg.tradePrice : leg.TradePrice;
                     var qty = leg.quantity != null ? leg.quantity : leg.Quantity;
+                    var legActive = (leg.isActive != null ? leg.isActive : leg.IsActive) === true;
+                    var exitPrice = leg.exitPrice != null ? leg.exitPrice : leg.ExitPrice;
+                    // System.Text.Json camelCase turns "PL" into "pl" (all-caps run collapses).
+                    var legPL = leg.pl != null ? leg.pl : (leg.pL != null ? leg.pL : (leg.PL != null ? leg.PL : 0));
 
                     var actionColor = action == "BUY" ? "green" : "red";
+                    var plColor = legPL > 0 ? 'green' : (legPL < 0 ? 'red' : '#555');
 
-                    panel += "<tr>";
+                    // P/L % against this leg's cost basis (tradePrice * qty)
+                    var legCostBasis = Math.abs((Number(price) || 0) * (Number(qty) || 0));
+                    var legPctText = legCostBasis > 0
+                        ? " (" + (Number(legPL) / legCostBasis * 100).toFixed(2) + "%)"
+                        : "";
+
+                    var plCell = legActive
+                        ? "<span style='color:#888;'>-</span>"
+                        : "<span style='font-weight:bold;color:" + plColor + ";'>" + Number(legPL).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + legPctText + "</span>";
+                    var exitCell = exitPrice == null ? "-" : exitPrice;
+
+                    panel += "<tr" + (legActive ? "" : " style='opacity:.65;'") + ">";
                     panel += "<td>" + legNo + "</td>";
                     panel += "<td><span style='font-weight:bold;color:" + actionColor + "'>" + action + "</span></td>";
                     panel += "<td>" + instrument + "</td>";
@@ -971,22 +1160,32 @@
                     panel += "<td>" + (strike == null ? "-" : strike) + "</td>";
                     panel += "<td>" + price + "</td>";
                     panel += "<td>" + qty + "</td>";
-                    panel += "<td class='text-center'><button type='button' class='btn btn-sm btn-danger btnRemoveLeg' data-legid='" + legId + "'>Remove</button></td>";
+                    panel += "<td>" + exitCell + "</td>";
+                    panel += "<td>" + plCell + "</td>";
+                    if (legActive) {
+                        panel += "<td class='text-center'><button type='button' class='btn btn-sm btn-danger btnRemoveLeg' data-legid='" + legId + "'>Remove</button></td>";
+                    } else {
+                        panel += "<td class='text-center text-muted'>closed</td>";
+                    }
                     panel += "</tr>";
 
                 });
 
-                // add-leg input row
-                panel += "<tr class='add-leg-row'>";
-                panel += "<td class='text-center'><strong>New</strong></td>";
-                panel += "<td><select class='form-control nl-action'><option value='BUY'>BUY</option><option value='SELL' selected>SELL</option></select></td>";
-                panel += "<td><select class='form-control nl-instrument'><option value='FUTURE'>FUTURE</option><option value='CE'>CE</option><option value='PE'>PE</option></select></td>";
-                panel += "<td><input type='date' class='form-control nl-expiry' value='" + toDateInputValue(expiry) + "' /></td>";
-                panel += "<td><input type='number' class='form-control nl-strike' /></td>";
-                panel += "<td><input type='number' step='0.01' class='form-control nl-price' /></td>";
-                panel += "<td><input type='number' class='form-control nl-qty' value='" + lot + "' /></td>";
-                panel += "<td class='text-center'><button type='button' class='btn btn-sm btn-success btnAddLegExisting' data-strategyid='" + sid + "'>Add</button></td>";
-                panel += "</tr>";
+                // add-leg input row — only for active strategies
+                if (isActive) {
+                    panel += "<tr class='add-leg-row'>";
+                    panel += "<td class='text-center'><strong>New</strong></td>";
+                    panel += "<td><select class='form-control nl-action'><option value='BUY'>BUY</option><option value='SELL' selected>SELL</option></select></td>";
+                    panel += "<td><select class='form-control nl-instrument'><option value='FUTURE'>FUTURE</option><option value='CE'>CE</option><option value='PE'>PE</option></select></td>";
+                    panel += "<td><input type='date' class='form-control nl-expiry' value='" + toDateInputValue(expiry) + "' /></td>";
+                    panel += "<td><input type='number' class='form-control nl-strike' /></td>";
+                    panel += "<td><input type='number' step='0.01' class='form-control nl-price' /></td>";
+                    panel += "<td><input type='number' class='form-control nl-qty' value='" + lot + "' /></td>";
+                    panel += "<td>-</td>";
+                    panel += "<td>-</td>";
+                    panel += "<td class='text-center'><button type='button' class='btn btn-sm btn-success btnAddLegExisting' data-strategyid='" + sid + "'>Add</button></td>";
+                    panel += "</tr>";
+                }
 
                 panel += "</tbody></table>";
                 panel += "</td></tr>";
@@ -994,6 +1193,13 @@
                 tbody.append(row + panel);
 
             });
+
+            var gpColor = grandPL > 0 ? 'green' : (grandPL < 0 ? 'red' : '#555');
+            $('#tblStrategiesGrandPL').html(
+                "<span style='font-weight:bold;color:" + gpColor + ";'>&#8377; " +
+                Number(grandPL).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
+                "</span>"
+            );
 
         });
 

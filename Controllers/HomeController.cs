@@ -385,13 +385,56 @@ namespace StockWebApplications.Controllers
             return result;
         }
 
-        // NIFTY 1-min candles with EMA10 / EMA30 and crossover trend.
+        // P&L calendar feed: returns per-trade sold rows within [fromDate,toDate] (yyyy-MM-dd).
         [HttpGet]
-        public async Task<JsonResult> GetNiftyEma(int rows = 15)
+        public JsonResult GetPnlCalendar(string fromDate, string toDate)
         {
             try
             {
-                var data = await _angel.GetNiftyEmaTrendAsync(rows);
+                if (!DateTime.TryParse(fromDate, CultureInfo.InvariantCulture, DateTimeStyles.None, out var from) ||
+                    !DateTime.TryParse(toDate, CultureInfo.InvariantCulture, DateTimeStyles.None, out var to))
+                {
+                    return Json(new { ok = false, error = "Invalid date range", rows = new object[0] });
+                }
+                if (to < from) (from, to) = (to, from);
+
+                var years = new List<int>();
+                for (int y = from.Year; y <= to.Year; y++) years.Add(y);
+
+                var rows = new List<object>();
+                foreach (var y in years)
+                {
+                    DataTable _;
+                    var list = dataAccess.GetProfitStockDetails(y.ToString(), "", out _);
+                    foreach (var s in list)
+                    {
+                        if (!DateTime.TryParse(s.SoldOn, CultureInfo.InvariantCulture, DateTimeStyles.None, out var sold))
+                            continue;
+                        if (sold < from.Date || sold > to.Date) continue;
+                        rows.Add(new
+                        {
+                            date = sold.ToString("yyyy-MM-dd"),
+                            name = s.Name,
+                            netProfit = s.netProfit,
+                            dividend = s.dividend
+                        });
+                    }
+                }
+                return Json(new { ok = true, rows });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, error = ex.Message, rows = new object[0] });
+            }
+        }
+
+        // NIFTY 1-min candles with EMA10 / EMA30 and crossover trend.
+        [HttpGet]
+        public JsonResult GetNiftyEma(int rows = 10)
+        {
+            try
+            {
+                var data = dataAccess.GetNiftyEmaFromDb(rows);
                 return Json(new { ok = true, rows = data });
             }
             catch (Exception ex)
