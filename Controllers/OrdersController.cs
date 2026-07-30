@@ -199,16 +199,32 @@ namespace StockWebApplications.Controllers
         {
             try
             {
-                var dashboard = dataAccess.GetStrategies();
+                // GetAllStrategiesWithPL carries per-leg IsActive, so we can rebuild the
+                // analysis from ONLY the still-open legs. usp_OptionStrategy_GetAll returns
+                // closed legs too, which would skew the AI's premium / break-even / max-loss
+                // math with positions that have already been exited.
+                var dashboard = dataAccess.GetAllStrategiesWithPL();
                 var master = dashboard.Masters.FirstOrDefault(m => m.StrategyId == strategyId);
 
-                if (master == null || master.Legs == null || master.Legs.Count == 0) return;
+                if (master == null || master.Legs == null) return;
+
+                var openLegs = master.Legs.Where(l => l.IsActive).ToList();
+
+                // No open legs left — keep the existing comment as the closed-out snapshot.
+                if (openLegs.Count == 0) return;
+
+                // Earliest expiry among the open legs (fallback when a leg has no expiry).
+                var openExpiries = openLegs
+                    .Where(l => l.ExpiryDate.HasValue)
+                    .Select(l => l.ExpiryDate.Value)
+                    .ToList();
+                var expiry = openExpiries.Count > 0 ? openExpiries.Min() : master.ExpiryDate;
 
                 var vm = new OptionStrategyVM
                 {
                     Symbol = master.Symbol,
-                    ExpiryDate = master.ExpiryDate,
-                    Legs = master.Legs.Select(l => new OptionStrategyLegVM
+                    ExpiryDate = expiry,
+                    Legs = openLegs.Select(l => new OptionStrategyLegVM
                     {
                         ActionType = l.ActionType,
                         InstrumentType = l.InstrumentType,

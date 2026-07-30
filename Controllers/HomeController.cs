@@ -385,6 +385,22 @@ namespace StockWebApplications.Controllers
             return result;
         }
 
+        // Daily P/L breakdown for a given month (year/month, 1-based). Powers the
+        // "P/L for [Month]" popup on the Home page.
+        [HttpGet]
+        public JsonResult GetMonthlyPnlBreakdown(int year, int month)
+        {
+            try
+            {
+                var rows = dataAccess.GetMonthlyPnlBreakdown(year, month);
+                return Json(new { ok = true, rows });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, error = ex.Message, rows = new object[0] });
+            }
+        }
+
         // P&L calendar feed: returns per-trade sold rows within [fromDate,toDate] (yyyy-MM-dd).
         [HttpGet]
         public JsonResult GetPnlCalendar(string fromDate, string toDate)

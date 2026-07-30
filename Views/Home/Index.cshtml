@@ -29,6 +29,9 @@
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
 
 <style>
+    .clickable-pl { cursor: pointer !important; text-decoration: underline; }
+    .clickable-pl:hover { opacity: .8; }
+
     table#tblstock {
         font-weight: bold;
         font-size:22px;
@@ -233,7 +236,7 @@
 
                         <th>Profitable Value :-<br /> <span id="totalwithdraw"></span><span id="totalwithdrawa" class="downMrktS"></span></th>
                         <th>
-                               <div id="dvmonthlyprofit" style="color:green;"></div>
+                               <div id="dvmonthlyprofit" class="clickable-pl" style="color:green;" title="Click for daily breakdown"></div>
                             <div id="dvdividend" style="color:green;"></div></th>
                         <th>
                             <div id="dvtodayTotal" style="color:green;"></div>
@@ -270,6 +273,22 @@
     </thead>
 
 </table>
+
+<!-- Monthly daily P/L breakdown popup -->
+<div class="modal fade" id="dailyPnlModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dailyPnlTitle">Daily P/L</h5>
+                <button type="button" class="close" id="dailyPnlClose" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body" id="dailyPnlBody" style="font-size:15px;">Loading…</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="dailyPnlFooterClose">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Strategy comment popup -->
 <div class="modal fade" id="remarksModal" tabindex="-1" role="dialog" aria-hidden="true">
@@ -311,10 +330,11 @@
                     <th style="text-align:right;">EMA10</th>
                     <th style="text-align:right;">EMA30</th>
                     <th>Trend</th>
+                    <th style="text-align:right;">EMA10 − EMA30</th>
                 </tr>
             </thead>
             <tbody id="niftyEmaBody">
-                <tr><td colspan="5" style="text-align:center;color:#888;">Loading…</td></tr>
+                <tr><td colspan="6" style="text-align:center;color:#888;">Loading…</td></tr>
             </tbody>
         </table>
     </div>
@@ -326,36 +346,7 @@
                         <th style="    vertical-align: top;"> <span id="indices0"></span>:- <span id="indicesval0"></span> (<span id="indiceschange0"></span>)<span id="indiceschange0a"></span> <div id="nvix"> </div></th>
                         <th style="    vertical-align: top;"><span id="indices1"></span>:- <span id="indicesval1"></span> (<span id="indiceschange1"></span>)<span id="indiceschange1a" class="downMrktS"></span><div id="nindex"> </div></th>
                         <th style="    vertical-align: top;"><span id="indices2"></span>:- <span id="indicesval2"></span> (<span id="indiceschange2"></span>)<span id="indiceschange2a" class="downMrktS"></span><div id="nbankindex"> </div></th>
-
-                        <th id="l30" style="display:none;    vertical-align: top !important;">
-                            Market Mood Index: <span style="color:green ;font: bold 20px Arial"><span id="val1"></span> High Extreme Fear (&#60;30)</span> <a href="#" onclick="togglemood()"> more..</a><span id="mmoddval1" style="display:none">
-                                <br />suggests a good time to open fresh positions, as markets are likely to be oversold and might turn upwards.
-                            </span>
-                        </th>
-                        <th id="l3050" style="display:none;    vertical-align: top !important;">
-                            Market Mood Index: <span style="color:orange ;font: bold 20px Arial"><span id="val2"></span> Fear (30—50)</span><a href="#" onclick="togglemood()"> more..</a> <span id="mmoddval2" style="display:none">
-                                <br />
-                                suggests that investors are fearful in the market, but the action to be taken depends on the MMI trajectory.<br />
-                                If it is dropping from Greed to Fear, it means fear is increasing in the market & investors should wait till it reaches Extreme Fear, as that is when the market is expected to turn upwards<br />
-                                If MMI is coming from Extreme fear, it means fear is reducing in the market. If not best, might be a good time to open fresh positions.
-                            </span>
-                        </th>
-
-                        <th id="l5070" style="display:none;    vertical-align: top !important;">
-                            Market Mood Index: <span style="color:darkorange ;font: bold 20px Arial"><span id="val3"></span> Greed (50 -70)</span><a href="#" onclick="togglemood()"> more..</a><span id="mmoddval3" style="display:none">
-                                <br />
-                                t suggests that investors are acting greedy in the market, but the action to be taken depends on the MMI trajectory.<br />
-                                If MMI is coming Neutral towards Greed zone, it means greed is increasing in the market and investors should be cautious in opening new positions.<br />
-                                If MMI is dropping from Extreme Greed, it means greed is reducing in the market. But more patience is suggested before looking for fresh opportunities.
-                            </span>
-                        </th>
-                        <th id="lg70" style="display:none;    vertical-align: top !important;">
-                            Market Mood Index: <span style="color:darkred ;font: bold 20px Arial">
-                                <span id="val4"></span> Extreme GREED (&gt;70)
-                            </span> <a href="#" onclick="togglemood()"> more..</a><span id="mmoddval4" style="display:none">  <br />High extreme greed (>80) suggests investors should avoid opening fresh positions as markets are overbought and likely to turn downwards.</span>
-                       
-                        </th>
-                    
+                        <th style="    vertical-align: top;"><span id="indices3"></span>:- <span id="indicesval3"></span> (<span id="indiceschange3"></span>)<span id="indiceschange3a" class="downMrktS"></span><div id="nsensex"> </div></th>
                     </tr>
                 </thead>
               
@@ -630,12 +621,12 @@ function toggleStockGrid() {
     // render EMA10/EMA30 and crossover trend. Table body scrolls; latest row is
     // scrolled into view and highlighted so you can spot the newest crossover fast.
     function loadNiftyEma() {
-        $.getJSON('/Home/GetNiftyEma', function (resp) {
+        $.getJSON('/Home/GetNiftyEma?rows=20', function (resp) {
 
             var $body = $('#niftyEmaBody');
 
             if (!resp || !resp.ok) {
-                $body.html('<tr><td colspan="5" style="text-align:center;color:#c00;">' +
+                $body.html('<tr><td colspan="6" style="text-align:center;color:#c00;">' +
                     ((resp && resp.error) ? String(resp.error).replace(/</g, '&lt;') : 'Fetch failed') +
                     '</td></tr>');
                 $('#niftyEmaStatus').text('');
@@ -645,7 +636,7 @@ function toggleStockGrid() {
             var rows = resp.rows || [];
             niftyEmaRows = rows;
             if (!rows.length) {
-                $body.html('<tr><td colspan="5" style="text-align:center;color:#888;">No candles yet for today.</td></tr>');
+                $body.html('<tr><td colspan="6" style="text-align:center;color:#888;">No candles yet for today.</td></tr>');
                 $('#niftyEmaStatus').text('');
                 return;
             }
@@ -678,6 +669,10 @@ function toggleStockGrid() {
                         ';color:#fff;padding:1px 6px;border-radius:8px;margin-left:6px;">CROSS</span>'
                     : '';
 
+                var diff = Number(r.ema10) - Number(r.ema30);
+                var diffColor = diff > 0 ? '#0a7d1a' : (diff < 0 ? '#c02020' : '#666');
+                var diffText = (diff >= 0 ? '+' : '') + diff.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
                 html += '<tr id="' + (isLast ? 'niftyEmaLastRow' : ('niftyEmaRow' + i)) + '" ' +
                         'style="background:' + rowBg + ';">' +
                     '<td>' + r.candle + '</td>' +
@@ -685,6 +680,7 @@ function toggleStockGrid() {
                     '<td style="text-align:right;">' + Number(r.ema10).toLocaleString('en-IN') + '</td>' +
                     '<td style="text-align:right;">' + Number(r.ema30).toLocaleString('en-IN') + '</td>' +
                     '<td style="color:' + trendColor + ';font-weight:bold;">' + r.trend + extraCell + '</td>' +
+                    '<td style="text-align:right;color:' + diffColor + ';font-weight:bold;">' + diffText + '</td>' +
                     '</tr>';
             }
             $body.html(html);
@@ -693,7 +689,7 @@ function toggleStockGrid() {
             $('#niftyEmaStatus').text(rows.length + ' candles · last ' + last.candle + ' · ' + crossCount + ' crossover' + (crossCount === 1 ? '' : 's'));
 
         }).fail(function () {
-            $('#niftyEmaBody').html('<tr><td colspan="5" style="text-align:center;color:#c00;">Fetch failed</td></tr>');
+            $('#niftyEmaBody').html('<tr><td colspan="6" style="text-align:center;color:#c00;">Fetch failed</td></tr>');
         });
     }
 
@@ -705,7 +701,7 @@ function toggleStockGrid() {
             return;
         }
 
-        var header = ['Candle', 'Close', 'EMA10', 'EMA30', 'Trend', 'Crossover'];
+        var header = ['Candle', 'Close', 'EMA10', 'EMA30', 'Trend', 'EMA10-EMA30', 'Crossover'];
 
         function csvCell(v) {
             var s = (v === null || v === undefined) ? '' : String(v);
@@ -722,6 +718,7 @@ function toggleStockGrid() {
                 r.ema10,
                 r.ema30,
                 r.trend,
+                (Number(r.ema10) - Number(r.ema30)).toFixed(2),
                 r.cross ? 'YES' : ''
             ].map(csvCell).join(','));
         }
@@ -750,6 +747,64 @@ function toggleStockGrid() {
     }
 
     $(document).on('click', '#niftyEmaExport', exportNiftyEmaToExcel);
+
+    // Click "P/L for [Month]" to open a daily breakdown popup for the current month.
+    $(document).on('click', '#dvmonthlyprofit', function () {
+        var d = new Date();
+        var y = d.getFullYear();
+        var m = d.getMonth() + 1;
+        var monthName = month[d.getMonth()];
+
+        $('#dailyPnlTitle').text('Daily P/L — ' + monthName + ' ' + y);
+        $('#dailyPnlBody').html('Loading…');
+
+        $('#dailyPnlModal').modal('show');
+
+        $.getJSON('/Home/GetMonthlyPnlBreakdown', { year: y, month: m }, function (resp) {
+            if (!resp || !resp.ok) {
+                $('#dailyPnlBody').html('<div style="color:#c00;">Failed to load: ' + ((resp && resp.error) ? resp.error : 'unknown') + '</div>');
+                return;
+            }
+            var rows = resp.rows || [];
+            if (!rows.length) {
+                $('#dailyPnlBody').html('<div style="color:#666;">No trades for this month.</div>');
+                return;
+            }
+            var total = 0, trades = 0;
+            var html = '<table class="table table-sm table-bordered" style="margin-bottom:0;">' +
+                '<thead style="background:#f6e6e8;"><tr>' +
+                '<th>Date</th><th style="text-align:right;">Trades</th><th style="text-align:right;">P/L (₹)</th>' +
+                '</tr></thead><tbody>';
+            for (var i = 0; i < rows.length; i++) {
+                var r = rows[i];
+                var pl = Number(r.pl) || 0;
+                total  += pl;
+                trades += Number(r.trades) || 0;
+                var col = pl > 0 ? 'green' : (pl < 0 ? 'red' : '#555');
+                html += '<tr>' +
+                    '<td>' + r.day + '</td>' +
+                    '<td style="text-align:right;">' + r.trades + '</td>' +
+                    '<td style="text-align:right;color:' + col + ';font-weight:600;">' +
+                        pl.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
+                    '</td>' +
+                    '</tr>';
+            }
+            var tCol = total > 0 ? 'green' : (total < 0 ? 'red' : '#555');
+            html += '</tbody><tfoot><tr style="font-weight:700;background:#fafafa;">' +
+                '<td>TOTAL</td>' +
+                '<td style="text-align:right;">' + trades + '</td>' +
+                '<td style="text-align:right;color:' + tCol + ';">' +
+                    total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
+                '</td></tr></tfoot></table>';
+            $('#dailyPnlBody').html(html);
+        }).fail(function () {
+            $('#dailyPnlBody').html('<div style="color:#c00;">Failed to fetch.</div>');
+        });
+    });
+
+    $(document).on('click', '#dailyPnlClose, #dailyPnlFooterClose', function () {
+        $('#dailyPnlModal').modal('hide');
+    });
 
     $(document).ready(function () {
         loadData();
@@ -969,7 +1024,24 @@ $('#ordersTable').on('click', '.exit-leg', function () {
 
 });
 
+// Structure of the strategies table on the last rebuild. The 8s poll re-runs
+// GettodaysOrder every cycle; rebuilding the DataTable each time flashes the
+// grid and collapses expanded rows. We only rebuild when the strategy/leg
+// structure actually changed — otherwise we leave the table alone and just
+// refresh the live P/L numbers in place (a silent update).
+var _ordersSignature = null;
+
 function GettodaysOrder(orders) {
+
+    var signature = JSON.stringify(orders || []);
+
+    if (signature === _ordersSignature && $.fn.DataTable.isDataTable('#ordersTable')) {
+        // Nothing structural changed — just update LTP / P/L silently, no rebuild.
+        refreshAllStrategyLtps();
+        return;
+    }
+
+    _ordersSignature = signature;
 
     var table = $('#ordersTable').DataTable({
 
@@ -1168,12 +1240,15 @@ function GettodaysOrder(orders) {
             'font-size:1.2em;font-weight:800;padding:10px 14px;' +
             'border-radius:6px;margin:12px 0;line-height:1.5;';
 
+        // The AI sometimes emits "**Maximum Loss:**" (colon inside the bold) and
+        // sometimes "**Maximum Loss**:" (colon outside), so allow an optional colon
+        // either way — otherwise the highlight only fires for one of the variants.
         html = html.replace(
-            /(<strong>\s*Maximum Loss\s*<\/strong>[^\n]*)/,
+            /(<strong>\s*Maximum Loss\s*:?\s*<\/strong>[^\n]*)/,
             '<span style="' + highlightStyle + '">$1</span>'
         );
         html = html.replace(
-            /(<strong>\s*Profitable Range\s*<\/strong>[^\n]*)/,
+            /(<strong>\s*Profitable Range\s*:?\s*<\/strong>[^\n]*)/,
             '<span style="' + highlightStyle + '">$1</span>'
         );
 
@@ -1384,10 +1459,14 @@ console.log(orders.length);
                 $('#nvix' ).html( jsonObj[i].Indices[0].index_html);
                 $('#nindex' ).html( jsonObj[i].Indices[1].index_html);
                 $('#nbankindex').html(jsonObj[i].Indices[2].index_html);
+                if (jsonObj[i].Indices[3]) {
+                    $('#nsensex').html(jsonObj[i].Indices[3].index_html);
                 }
-               
+                }
+
               //  $('#sample').html(jsonObj[i].indicesText);
-                for (j = 0; j < 3; j++)
+                var idxCount = Math.min(4, jsonObj[i].Indices.length);
+                for (j = 0; j < idxCount; j++)
                 {
                 var cname = jsonObj[i].Indices[j].companyName;
                 var cclose = jsonObj[i].Indices[j].close;

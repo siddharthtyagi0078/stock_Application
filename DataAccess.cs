@@ -22,6 +22,41 @@ namespace StockWebApplications
 
 
 
+        // Daily aggregated P/L for a single month, from the shares table.
+        public List<object> GetMonthlyPnlBreakdown(int year, int month)
+        {
+            var list = new List<object>();
+            var from = new DateTime(year, month, 1);
+            var to   = from.AddMonths(1);
+
+            const string sql = @"
+                SELECT CONVERT(varchar(10), sell_date, 23) AS day,
+                       COUNT(*) AS trades,
+                       SUM((sell_price - inv_Price) * shares) AS pl
+                FROM dbo.shares
+                WHERE sell_date >= @from AND sell_date < @to
+                  AND sold = 1
+                GROUP BY CONVERT(varchar(10), sell_date, 23)
+                ORDER BY day";
+
+            using var con = new SqlConnection(ConnectioString);
+            using var cmd = new SqlCommand(sql, con);
+            cmd.Parameters.AddWithValue("@from", from);
+            cmd.Parameters.AddWithValue("@to",   to);
+            con.Open();
+            using var rdr = cmd.ExecuteReader();
+            while (rdr.Read())
+            {
+                list.Add(new
+                {
+                    day    = Convert.ToString(rdr["day"]),
+                    trades = Convert.ToInt32(rdr["trades"]),
+                    pl     = rdr["pl"] == DBNull.Value ? 0m : Convert.ToDecimal(rdr["pl"])
+                });
+            }
+            return list;
+        }
+
         // Read pre-computed NIFTY EMA rows written by the Python job. take=0 returns all.
         public List<AngelOneClient.NiftyEmaRow> GetNiftyEmaFromDb(int take = 0)
         {
@@ -924,10 +959,9 @@ namespace StockWebApplications
 
             List<string> ls = new List<string>
             { "%5EINDIAVIX",
-               // "%5EBSESN",
                 "%5ENSEI",
                 "%5ENSEBANK",
-
+                "%5EBSESN",
             };
             //ls.Add();
             List<StockModel> resultval = new List<StockModel>();
@@ -958,7 +992,7 @@ namespace StockWebApplications
 
                         change = Math.Round(dataval.regularMarketPrice - prev_close, 2),
                         changepercent = Math.Round(((dataval.regularMarketPrice - prev_close) / prev_close) * 100, 2),
-                        companyName = dataval.shortName.Replace("INDIA",""),
+                        companyName = dataval.shortName.Replace("INDIA","").Replace("S&P BSE ","").Trim(),
                         close = (float)Math.Round(dataval.regularMarketPrice, 2),
                         adjustedClose = (float)Math.Round(dataval.regularMarketPrice, 2),
                         index_html = "<span style = 'color:green;font-size: 20px;' ><span style = 'color:darkred;font-size: 20px;' > " + Math.Round(dataval.regularMarketDayLow, 2) + " </ span ><meter style = 'height:23px;width:170px;margin-left:5px;' min = " + dataval.regularMarketDayLow + " value = " + dataval.regularMarketPrice + " max = " + dataval.regularMarketDayHigh + " ></meter> <span style = 'color:darkred;font-size: 20px;' > " + Math.Round(dataval.regularMarketDayHigh, 2) + " </span></span>"

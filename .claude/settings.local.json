@@ -28,7 +28,9 @@
       "PowerShell(git -C \"E:\\\\Claude code\\\\StockWeb Application\\\\StockWebApplications\" remote -v)",
       "PowerShell(git -C \"E:\\\\Claude code\\\\StockWeb Application\\\\StockWebApplications\" status --short)",
       "PowerShell(git -C \"E:\\\\Claude code\\\\StockWeb Application\\\\StockWebApplications\" branch -vv)",
-      "PowerShell(git -C \"E:\\\\Claude code\\\\StockWeb Application\\\\StockWebApplications\" add -A)"
+      "PowerShell(git -C \"E:\\\\Claude code\\\\StockWeb Application\\\\StockWebApplications\" add -A)",
+      "PowerShell(git -C \"E:\\\\Claude code\\\\StockWeb Application\\\\StockWebApplications\" push origin main)",
+      "Bash(python -c ' *)"
     ]
   }
 }
