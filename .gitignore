@@ -7,3 +7,5 @@ publish/
 appsettings.Development.json
 scripts/logs/
 scripts/.angel_session.json
+scripts/__pycache__/
+__pycache__/

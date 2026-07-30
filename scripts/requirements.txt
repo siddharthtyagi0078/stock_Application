@@ -3,4 +3,5 @@ pyotp
 pandas
 pyodbc
 requests
+lxml
 websocket-client

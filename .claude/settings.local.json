@@ -30,7 +30,10 @@
       "PowerShell(git -C \"E:\\\\Claude code\\\\StockWeb Application\\\\StockWebApplications\" branch -vv)",
       "PowerShell(git -C \"E:\\\\Claude code\\\\StockWeb Application\\\\StockWebApplications\" add -A)",
       "PowerShell(git -C \"E:\\\\Claude code\\\\StockWeb Application\\\\StockWebApplications\" push origin main)",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "Bash(python -c \"import pyodbc; print\\('pyodbc', pyodbc.version\\); print\\([d for d in pyodbc.drivers\\(\\)]\\)\")",
+      "Bash(python inspect_schema.py)",
+      "Bash(python fetch_share_details.py)"
     ]
   }
 }
