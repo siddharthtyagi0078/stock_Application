@@ -18,7 +18,7 @@ namespace StockWebApplications
     public class DataAccess
     {
        string apiUrl = "https://query2.finance.yahoo.com/v8/finance/chart/{0}?interval=1d&events=history&crumb=7nRXFraYmVO";
-        string ConnectioString = "Data Source=103.21.58.192;Initial Catalog=ifutujah_paym;Integrated Security = False; User ID = puser; Password=Concept@2711;Encrypt=False";
+        string ConnectioString = "Data Source=111.111.111.111;Initial Catalog=ifutujasdsdsdsdh_paym;Integrated Security = False; User ID = puser; Password=yourpassword;Encrypt=False";
 
 
 
