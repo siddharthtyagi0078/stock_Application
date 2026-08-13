@@ -18,7 +18,7 @@ namespace StockWebApplications
     public class DataAccess
     {
        string apiUrl = "https://query2.finance.yahoo.com/v8/finance/chart/{0}?interval=1d&events=history&crumb=7nRXFraYmVO";
-        string ConnectioString = "Data Source=103.21.58.192;Initial Catalog=ifutujah_paym;Integrated Security = False; User ID = puser; Password=Concept@2711;Encrypt=False";
+        string ConnectioString = AppConfig.GetConnectionString("DefaultConnection");
 
 
 
@@ -123,6 +123,7 @@ namespace StockWebApplications
                             : Convert.ToDateTime(dr["ExpiryDate"]),
 
                         LotSize = Convert.ToInt32(dr["LotSize"]),
+                        Account = dr["Account"] == DBNull.Value ? "" : dr["Account"].ToString(),
                         TotalLegs = Convert.ToInt32(dr["TotalLegs"]),
                         TotalPremium = Convert.ToDecimal(dr["TotalPremium"])
                     });
@@ -222,7 +223,7 @@ namespace StockWebApplications
             var mastersById = new Dictionary<int, StrategyMasterVM>();
 
             const string masterSql = @"
-                SELECT StrategyId, StrategyName, Symbol, LotSize
+                SELECT StrategyId, StrategyName, Symbol, LotSize, Account
                 FROM dbo.OptionStrategy";
 
             // Guard: the legid column exists only after the migration.
@@ -271,6 +272,7 @@ namespace StockWebApplications
                             StrategyName = Convert.ToString(rdr["StrategyName"]),
                             Symbol       = Convert.ToString(rdr["Symbol"]),
                             LotSize      = Convert.ToInt32(rdr["LotSize"]),
+                            Account      = rdr["Account"] == DBNull.Value ? "" : rdr["Account"].ToString(),
                             ExpiryDate   = DateTime.MinValue
                         };
                         mastersById[m.StrategyId] = m;
@@ -429,6 +431,10 @@ namespace StockWebApplications
                     string.IsNullOrWhiteSpace(model.Remarks)
                         ? (object)DBNull.Value
                         : model.Remarks);
+                com.Parameters.AddWithValue("@Account",
+                    string.IsNullOrWhiteSpace(model.Account)
+                        ? (object)DBNull.Value
+                        : model.Account);
 
                 strategyId = Convert.ToInt32(com.ExecuteScalar());
             }
@@ -498,6 +504,10 @@ namespace StockWebApplications
                 com.Parameters.AddWithValue("@DateAdded", objstock.DateAdded);
                 com.Parameters.AddWithValue("@shares", objstock.shares);
                 com.Parameters.AddWithValue("@inv_Price", Convert.ToDecimal(objstock.inv_Price));
+                com.Parameters.AddWithValue("@Account",
+                    string.IsNullOrWhiteSpace(objstock.Account)
+                        ? (object)DBNull.Value
+                        : objstock.Account);
                 i = com.ExecuteNonQuery();
             }
             return i;
@@ -709,7 +719,8 @@ namespace StockWebApplications
                         SoldOn = Convert.ToString(dr["SoldOn"]),
                         profitpercent = Convert.ToDecimal(dr["profitpercent"]),
                         Duration = Convert.ToString(dr["Duration"]),
-                        FyYear = Convert.ToString(dr["FyYear"])
+                        FyYear = Convert.ToString(dr["FyYear"]),
+                        Account = dr.Table.Columns.Contains("Account") ? Convert.ToString(dr["Account"]) : ""
 
 
 

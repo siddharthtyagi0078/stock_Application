@@ -180,6 +180,26 @@ namespace StockWebApplications.Controllers
             var result = this.Json(new { data = JsonSerializer.Serialize(lstresult) });
             return result;
         }
+        // Per-account P/L rows appended to the profit-report summary.
+        // P/L is pure trade P/L (perShare * shares), one row per account, coloured
+        // green when >= 0 and red when negative.
+        private string BuildAccountPLRows(List<ProfitStockList> stocks)
+        {
+            var accounts = new[] { "Arnav-Angelone", "Sid-Connect", "Archana-Angelone" };
+            CultureInfo hindi = new CultureInfo("hi-IN");
+            string val = "";
+            foreach (var acc in accounts)
+            {
+                decimal pl = stocks
+                    .Where(s => string.Equals(s.Account, acc, StringComparison.OrdinalIgnoreCase))
+                    .Sum(s => s.perShare * s.shares);
+                var color = pl < 0 ? "red" : "green";
+                val += " <div class=\"resp-table-row\"><div class='table-body-cell' style='width:420px;color:" + color + ";'> " + acc + " P/L: </div>";
+                val += "<div class='table-body-cell' style='color:" + color + ";font-weight:bold;'>" + string.Format(hindi, "{0:c}", Math.Round(pl, 2)) + "/-</div>";
+                val += "</div>";
+            }
+            return val;
+        }
         private string GenerateHtml(DataSet summary,string col_width)
         {
             string val = "";
@@ -353,7 +373,10 @@ namespace StockWebApplications.Controllers
                + "<br/><span     style='color:brown;font-size: 24px;'>Holding For:" + stock.Duration + "</span>";
                 stock.Price_str = string.Format(hindi, "{0:c}",Math.Round(stock.buyPrice, 2)) + " / " + string.Format(hindi, "{0:c}" ,Math.Round(stock.SellPrice, 2))+ diff_val;
                 stock.netProfitPercent = Math.Round(profitpercent, 2);
-                stock.SoldOn += "<br/>" + stock.FyYear;
+                var accountStr = string.IsNullOrWhiteSpace(stock.Account)
+                    ? ""
+                    : "<br/><span style='color:#5b21b6;font-weight:bold;'>A/C: " + stock.Account + "</span>";
+                stock.SoldOn += "<br/>" + stock.FyYear + accountStr;
             }
             var resultval = new ProfitStockListResponse();
             if (lststockModel.Count > 0) {
@@ -366,7 +389,7 @@ namespace StockWebApplications.Controllers
             DataSet ds = new DataSet();
             ds.Tables.Add(summary.Copy());
             var initialdiv = "<div id=\"resp-table\">\r\n    <div id=\"resp-table-body\">\r\n   ";
-            resultval.Summary=initialdiv + GenerateHtml(ds,"420") + "</div></div>";
+            resultval.Summary=initialdiv + GenerateHtml(ds,"420") + BuildAccountPLRows(lststockModel) + "</div></div>";
             //resultval.Summary = summary;
 
             result = this.Json(new { data = JsonSerializer.Serialize(resultval) });

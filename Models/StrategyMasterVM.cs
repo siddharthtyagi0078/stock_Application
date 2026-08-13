@@ -12,6 +12,8 @@
 
         public int LotSize { get; set; }
 
+        public string Account { get; set; }
+
         public int TotalLegs { get; set; }
 
         public decimal TotalPremium { get; set; }

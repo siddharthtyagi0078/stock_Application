@@ -315,13 +315,16 @@
             (1-min candles &middot; Bullish cross &rarr; SELL PE(Bullish), Bearish cross &rarr; SELL CE(Bearish))
         </small>
         <span style="float:right;font-weight:normal;">
+            <button type="button" id="niftyEmaToggle" class="btn btn-outline-secondary btn-sm" style="margin-right:10px;">
+                <i class="fa fa-chevron-up"></i> Hide
+            </button>
             <button type="button" id="niftyEmaExport" class="btn btn-success btn-sm" style="margin-right:10px;">
                 <i class="fa fa-file-excel-o"></i> Export to Excel
             </button>
             <span id="niftyEmaStatus" style="font-size:14px;color:#666;"></span>
         </span>
     </h4>
-    <div style="max-height:340px;overflow-y:auto;border:1px solid #e5b0b5;border-radius:4px;background:#fff;">
+    <div id="niftyEmaWrap" style="max-height:340px;overflow-y:auto;border:1px solid #e5b0b5;border-radius:4px;background:#fff;">
         <table class="table table-bordered table-sm" id="niftyEmaTable" style="margin-bottom:0;font-size:15px;">
             <thead style="background:#f6e6e8;position:sticky;top:0;z-index:1;">
                 <tr>
@@ -643,7 +646,8 @@ function toggleStockGrid() {
 
             var html = '';
             var crossCount = 0;
-            for (var i = 0; i < rows.length; i++) {
+            // Render newest candle first (top of the table); data arrives oldest -> newest.
+            for (var i = rows.length - 1; i >= 0; i--) {
                 var r = rows[i];
                 if (r.cross) crossCount++;
 
@@ -747,6 +751,16 @@ function toggleStockGrid() {
     }
 
     $(document).on('click', '#niftyEmaExport', exportNiftyEmaToExcel);
+
+    // Collapse / expand the NIFTY EMA table.
+    $(document).on('click', '#niftyEmaToggle', function () {
+        var $wrap = $('#niftyEmaWrap');
+        var hidden = $wrap.is(':hidden');
+        $wrap.slideToggle(150);
+        $(this).html(hidden
+            ? '<i class="fa fa-chevron-up"></i> Hide'
+            : '<i class="fa fa-chevron-down"></i> Show');
+    });
 
     // Click "P/L for [Month]" to open a daily breakdown popup for the current month.
     $(document).on('click', '#dvmonthlyprofit', function () {

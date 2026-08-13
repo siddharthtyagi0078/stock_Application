@@ -30,6 +30,9 @@ namespace StockWebApplications.Models
 
         public string Remarks { get; set; }
 
+        [Display(Name = "Account")]
+        public string Account { get; set; }
+
         public List<OptionStrategyLegVM> Legs { get; set; }
     }
 }

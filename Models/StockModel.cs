@@ -57,7 +57,8 @@
         public decimal Avg_percent { get; set; }
 
         public decimal dividend { get; set; }
-        
+        public string Account { get; set; }
+
     }
     public class StockList
     {
@@ -118,6 +119,7 @@
         public string DateAdded { get; set; }
         public string shares { get; set; }
         public string inv_Price { get; set; }
+        public string Account { get; set; }
 
     }
 

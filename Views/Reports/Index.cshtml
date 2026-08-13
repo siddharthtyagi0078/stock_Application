@@ -257,6 +257,13 @@
                                             <input type="text" class="form-control" placeholder="Price" id="txtPrice">
                                         </div>
                                         <div class="col">
+                                            <select class="form-control" id="ddlAccount">
+                                                <option value="Arnav-Angelone">Arnav-Angelone</option>
+                                                <option value="Sid-Connect">Sid-Connect</option>
+                                                <option value="Archana-Angelone">Archana-Angelone</option>
+                                            </select>
+                                        </div>
+                                        <div class="col">
                                             <button type="submit" class="btn btn-primary" onclick="return AddStock();">ADD</button>
                                         </div>
                                     </div>
@@ -631,6 +638,10 @@
             d.getFullYear();
         $("#txtStockDate").datepicker();
         $("#txtStockDate").val(output);
+        try {
+            var savedAccount = localStorage.getItem('selectedAccount');
+            if (savedAccount) { $('#ddlAccount').val(savedAccount); }
+        } catch (e) { }
         $("#txtStockDatet").datepicker();
         $("#txtStockDatet").val(output);
     });
@@ -662,11 +673,14 @@
             return false;
         }
 
+        try { localStorage.setItem('selectedAccount', $('#ddlAccount').val()); } catch (e) { }
+
         var jsonInput1 = {
             Script_code: $('#txtStock').val(),
             DateAdded: $('#txtStockDate').val(),
             shares: $('#txtShares').val(),
-            inv_Price: $('#txtPrice').val()
+            inv_Price: $('#txtPrice').val(),
+            Account: $('#ddlAccount').val()
         };
 
         var inputval = (JSON.stringify(jsonInput1));

@@ -381,11 +381,16 @@
                            value="225" />
                 </div>
 
+                <!-- Remarks is auto-populated with the AI summary; kept hidden so the value still posts. -->
+                <input type="hidden" id="Remarks" />
+
                 <div class="col-md-2 mb-3">
-                    <label>Remarks</label>
-                    <input type="text"
-                           id="Remarks"
-                           class="form-control" />
+                    <label>Account</label>
+                    <select id="Account" class="form-control">
+                        <option value="Arnav-Angelone">Arnav-Angelone</option>
+                        <option value="Sid-Connect">Sid-Connect</option>
+                        <option value="Archana-Angelone">Archana-Angelone</option>
+                    </select>
                 </div>
 
             </div>
@@ -562,6 +567,7 @@
                         <th width="60"></th>
                         <th>Strategy</th>
                         <th>Symbol</th>
+                        <th>Account</th>
                         <th>Expiry</th>
                         <th>Lot</th>
                         <th>Legs</th>
@@ -572,7 +578,7 @@
                 <tbody></tbody>
                 <tfoot>
                     <tr>
-                        <th colspan="7" class="text-end">Total P/L (Closed):</th>
+                        <th colspan="8" class="text-end">Total P/L (Closed):</th>
                         <th id="tblStrategiesGrandPL"></th>
                     </tr>
                 </tfoot>
@@ -593,6 +599,11 @@
     $(document).ready(function () {
 
         LoadStrategies();
+
+        try {
+            var savedAccount = localStorage.getItem('selectedAccount');
+            if (savedAccount) { $('#Account').val(savedAccount); }
+        } catch (e) { }
 
         //---------------------------------------------------------
         // Refresh / reload the strategies grid
@@ -784,6 +795,8 @@
             strategy.Symbol = $("#Symbol").val();
             strategy.LotSize = $("#LotSize").val();
             strategy.Remarks = $("#Remarks").val();
+            strategy.Account = $("#Account").val();
+            try { localStorage.setItem('selectedAccount', $("#Account").val()); } catch (e) { }
 
             strategy.Legs = [];
 
@@ -976,6 +989,7 @@
 
             var name = s.strategyName || s.StrategyName || "";
             var symbol = s.symbol || s.Symbol || "";
+            var account = s.account || s.Account || "";
             var expiry = s.expiryDate || s.ExpiryDate;
             var lot = s.lotSize != null ? s.lotSize : s.LotSize;
             var legs = s.legs || s.Legs || [];
@@ -1001,6 +1015,7 @@
             rows += "<tr>";
             rows += "<td>" + escapeHtml(name) + "</td>";
             rows += "<td>" + escapeHtml(symbol) + "</td>";
+            rows += "<td>" + escapeHtml(account) + "</td>";
             rows += "<td>" + fmtDate(expiry) + "</td>";
             rows += "<td>" + (lot != null ? lot : "") + "</td>";
             rows += "<td>" + legs.length + " / " + closedLegs + " closed</td>";
@@ -1012,10 +1027,10 @@
         var table = "";
         table += "<table border='1'>";
         table += "<thead><tr>";
-        table += "<th>Strategy</th><th>Symbol</th><th>Expiry</th><th>Lot</th><th>Legs</th><th>State</th><th>Total P/L</th>";
+        table += "<th>Strategy</th><th>Symbol</th><th>Account</th><th>Expiry</th><th>Lot</th><th>Legs</th><th>State</th><th>Total P/L</th>";
         table += "</tr></thead>";
         table += "<tbody>" + rows + "</tbody>";
-        table += "<tfoot><tr><th colspan='6' style='text-align:right;'>Total P/L (All):</th><th>" + Number(grandPL).toFixed(2) + "</th></tr></tfoot>";
+        table += "<tfoot><tr><th colspan='7' style='text-align:right;'>Total P/L (All):</th><th>" + Number(grandPL).toFixed(2) + "</th></tr></tfoot>";
         table += "</table>";
 
         // Excel opens a bare HTML table directly; prepend a BOM so UTF-8 is detected.
@@ -1052,12 +1067,12 @@
             // Server returned {error: "..."} instead of an array
             if (data && !$.isArray(data) && (data.error || data.Error)) {
                 var msg = data.error || data.Error;
-                tbody.append('<tr><td colspan="8" class="text-center" style="color:#c00;">Load failed: ' + msg + '</td></tr>');
+                tbody.append('<tr><td colspan="9" class="text-center" style="color:#c00;">Load failed: ' + msg + '</td></tr>');
                 return;
             }
 
             if (!data || !data.length) {
-                tbody.append('<tr><td colspan="8" class="text-center">No strategies found.</td></tr>');
+                tbody.append('<tr><td colspan="9" class="text-center">No strategies found.</td></tr>');
                 return;
             }
 
@@ -1068,6 +1083,7 @@
                 var sid = s.strategyId != null ? s.strategyId : s.StrategyId;
                 var name = s.strategyName || s.StrategyName || "";
                 var symbol = s.symbol || s.Symbol || "";
+                var account = s.account || s.Account || "";
                 var expiry = s.expiryDate || s.ExpiryDate;
                 var lot = s.lotSize != null ? s.lotSize : s.LotSize;
                 var legs = s.legs || s.Legs || [];
@@ -1102,6 +1118,7 @@
                 row += "<td class='text-center'><button type='button' class='btn btn-sm btn-primary btnToggleLegs' data-strategyid='" + sid + "'>+</button></td>";
                 row += "<td>" + name + "</td>";
                 row += "<td>" + symbol + "</td>";
+                row += "<td>" + escapeHtml(account) + "</td>";
                 row += "<td>" + fmtDate(expiry) + "</td>";
                 row += "<td>" + lot + "</td>";
                 var closedLegs = 0;
@@ -1117,7 +1134,7 @@
                 // hidden legs panel
                 var panel = "";
                 panel += "<tr class='legs-panel " + (isActive ? "" : "closed-panel") + "' data-strategyid='" + sid + "' style='display:none;'>";
-                panel += "<td colspan='8'>";
+                panel += "<td colspan='9'>";
                 panel += "<table class='table table-sm table-bordered mb-0'>";
                 panel += "<thead class='table-light'><tr>";
                 panel += "<th>Leg</th><th>Action</th><th>Instrument</th><th>Expiry</th><th>Strike</th><th>Trade Price</th><th>Qty</th><th>Exit</th><th>P/L</th><th width='90'></th>";
