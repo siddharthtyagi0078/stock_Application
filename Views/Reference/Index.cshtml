@@ -1,0 +1,143 @@
+@{
+    ViewBag.Title = "Case Reference";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Case Reference</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        body { background:#f2f5f9; font-family: Segoe UI, sans-serif; }
+        .page { max-width: 1100px; margin: 30px auto; background:#fff; padding: 24px 28px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.08); }
+        h2 { margin-bottom: 18px; }
+        .search-row { display:flex; gap:10px; margin-bottom:20px; }
+        .search-row input { flex:1; padding: 10px 14px; font-size: 16px; border: 1px solid #ccd0d5; border-radius: 6px; }
+        .search-row button { padding: 10px 22px; font-size: 15px; font-weight: 600; }
+        .result { border-bottom: 1px solid #eee; padding: 12px 4px; }
+        .result:last-child { border-bottom: none; }
+        .result a { color: #1a4bb8; text-decoration: none; font-size: 16px; font-weight: 500; }
+        .result a:hover { text-decoration: underline; }
+        #status { color:#666; font-size:14px; margin-bottom:10px; }
+        .modal-body { padding: 18px 26px; height: 80vh; overflow-y: auto; font-size: 15px; line-height: 1.55; color:#222; }
+        /* Neutralise any width / float / column layout indiankanoon may inline. */
+        .modal-body .judgments,
+        .modal-body #main-content,
+        .modal-body .maindoc,
+        .modal-body .doc_content { width: 100% !important; max-width: 100% !important; float: none !important; display: block !important; margin: 0 !important; padding: 0 !important; }
+        .modal-body h2.doc_title { font-size: 20px; margin: 4px 0 10px; color:#1a1a2e; }
+        .modal-body h3.doc_citations, .modal-body h3.doc_author, .modal-body h3.doc_bench, .modal-body h3.docsource_main { font-size: 14px; color:#555; margin: 2px 0; font-weight: 500; }
+        .modal-body p { margin: 8px 0; }
+        .modal-body blockquote { border-left: 3px solid #ccc; padding-left: 12px; margin: 10px 0; color:#111; font-weight: 700; }
+        .modal-body pre { white-space: pre-wrap; word-wrap: break-word; font-family: 'Georgia', 'Times New Roman', serif; font-size: 15px; line-height: 1.6; background: transparent; padding: 0; border: none; margin: 12px 0; width: 100%; max-width: 100%; }
+        .modal-body a { color:#1a4bb8; }
+        .modal-xl { max-width: 92vw; }
+        .modal-loader { text-align:center; color:#666; padding: 40px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-light bg-white border-bottom mb-3">
+        <div class="container-fluid">
+            <a class="navbar-brand" asp-controller="Home" asp-action="Index" style="font-weight:600;color:#1a4bb8;">iFuture Corporation</a>
+        </div>
+    </nav>
+
+    <div class="page">
+        <h2>Case Reference</h2>
+
+        <div class="search-row">
+            <input type="text" id="q" placeholder="Enter keyword for your case reference" autofocus />
+            <button type="button" class="btn btn-primary" id="btnSearch">Search</button>
+        </div>
+
+        <div id="status"></div>
+        <div id="results"></div>
+    </div>
+
+    <div class="modal fade" id="caseModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="caseTitle">Case</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="caseBody">
+                    <div class="modal-loader">Loading…</div>
+                </div>
+                <div class="modal-footer">
+                    <a id="caseOpen" href="#" target="_blank" class="btn btn-outline-primary">Open in new tab</a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function runSearch() {
+            var q = $('#q').val().trim();
+            if (!q) { $('#q').focus(); return; }
+
+            $('#status').text('Searching…');
+            $('#results').empty();
+
+            $.getJSON('/Reference/Search', { q: q }, function (resp) {
+                if (!resp || !resp.ok) {
+                    $('#status').text('Failed: ' + ((resp && resp.error) || 'unknown'));
+                    return;
+                }
+                var rows = resp.results || [];
+                if (!rows.length) {
+                    $('#status').text('No results.');
+                    return;
+                }
+                $('#status').text(rows.length + ' results');
+
+                var html = '';
+                for (var i = 0; i < rows.length; i++) {
+                    var r = rows[i];
+                    html += '<div class="result">' +
+                        '<a href="#" class="case-link" data-url="' +
+                            $('<div>').text(r.url).html() + '" data-title="' +
+                            $('<div>').text(r.title).html() + '">' +
+                            $('<div>').text(r.title).html() +
+                        '</a></div>';
+                }
+                $('#results').html(html);
+            }).fail(function () { $('#status').text('Failed to fetch.'); });
+        }
+
+        $('#btnSearch').on('click', runSearch);
+        $('#q').on('keydown', function (e) { if (e.key === 'Enter') runSearch(); });
+
+        $(document).on('click', '.case-link', function (e) {
+            e.preventDefault();
+            var url = $(this).data('url');
+            var title = $(this).data('title');
+            $('#caseTitle').text(title);
+            $('#caseOpen').attr('href', url);
+            $('#caseBody').html('<div class="modal-loader">Loading…</div>');
+            $('#caseModal').modal('show');
+
+            $.getJSON('/Reference/GetCase', { url: url }, function (resp) {
+                if (!resp || !resp.ok) {
+                    $('#caseBody').html('<div class="modal-loader" style="color:#c00;">' +
+                        'Could not load case: ' + ((resp && resp.error) || 'unknown') + '</div>');
+                    return;
+                }
+                if (resp.title) $('#caseTitle').text(resp.title);
+                $('#caseBody').html(resp.body);
+                $('#caseBody').scrollTop(0);
+            }).fail(function () {
+                $('#caseBody').html('<div class="modal-loader" style="color:#c00;">Failed to fetch.</div>');
+            });
+        });
+
+        $('#caseModal').on('hidden.bs.modal', function () {
+            $('#caseBody').html('<div class="modal-loader">Loading…</div>');
+        });
+    </script>
+</body>
+</html>

@@ -22,6 +22,9 @@ builder.Services.AddSingleton<StockWebApplications.AngelOneClient>();
 
 var app = builder.Build();
 
+// Expose IConfiguration to code that isn't DI-instantiated (e.g. `new DataAccess()`).
+StockWebApplications.AppConfig.Configuration = app.Configuration;
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

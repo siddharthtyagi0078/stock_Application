@@ -497,6 +497,21 @@ namespace StockWebApplications.Controllers
             }
         }
 
+        // Per-trade breakdown behind the "Today's P/L" popup.
+        [HttpGet]
+        public JsonResult GetTodayTrades()
+        {
+            try
+            {
+                var rows = dataAccess.GetTodayTrades();
+                return Json(new { ok = true, rows });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, error = ex.Message, rows = new object[0] });
+            }
+        }
+
         [HttpPost]
         public JsonResult FIIData()
         {

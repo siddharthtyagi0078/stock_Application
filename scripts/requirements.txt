@@ -5,3 +5,4 @@ pyodbc
 requests
 lxml
 websocket-client
+Pillow

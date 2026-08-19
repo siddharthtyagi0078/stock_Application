@@ -1,0 +1,161 @@
+@* Floating AI chat bot — included on every page (via _Layout and directly on
+   Layout=null pages). Self-contained: no framework dependencies. Guarded so it
+   only initialises once even if the partial is rendered more than once. *@
+<style>
+    #ragbot-fab {
+        position: fixed; right: 22px; bottom: 22px; z-index: 99999;
+        width: 60px; height: 60px; border-radius: 50%; border: none; cursor: pointer;
+        background: #0d6efd; color: #fff; font-size: 28px; box-shadow: 0 4px 14px rgba(0,0,0,.3);
+    }
+    #ragbot-fab:hover { background: #0b5ed7; }
+    #ragbot-panel {
+        position: fixed; right: 22px; bottom: 92px; z-index: 99999;
+        width: 380px; max-width: calc(100vw - 44px); height: 520px; max-height: calc(100vh - 130px);
+        background: #fff; border: 1px solid #dcdfe4; border-radius: 12px; display: none;
+        flex-direction: column; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,.25);
+        font-family: 'Segoe UI', Arial, sans-serif;
+    }
+    #ragbot-panel.open { display: flex; }
+    #ragbot-head { background: #0d6efd; color: #fff; padding: 12px 14px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+    #ragbot-head .x { cursor: pointer; font-size: 20px; line-height: 1; opacity: .9; }
+    #ragbot-msgs { flex: 1; overflow-y: auto; padding: 12px; background: #f7f9fc; }
+    #ragbot-msgs .m { margin-bottom: 10px; display: flex; }
+    #ragbot-msgs .m.u { justify-content: flex-end; }
+    #ragbot-msgs .b { max-width: 85%; padding: 8px 11px; border-radius: 12px; font-size: 14px; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; }
+    #ragbot-msgs .u .b { background: #0d6efd; color: #fff; border-bottom-right-radius: 3px; }
+    #ragbot-msgs .a .b { background: #fff; color: #222; border: 1px solid #e3e7ec; border-bottom-left-radius: 3px; }
+    #ragbot-msgs .a .b.err { color: #c62828; }
+    #ragbot-msgs details { margin-top: 6px; }
+    #ragbot-msgs summary { cursor: pointer; color: #667; font-size: 12px; }
+    #ragbot-msgs pre { background: #f0f2f5; padding: 7px; border-radius: 6px; font-size: 11.5px; overflow-x: auto; margin: 5px 0 0; }
+    #ragbot-foot { display: flex; gap: 6px; padding: 10px; border-top: 1px solid #e6e9ee; background: #fff; }
+    #ragbot-foot input { flex: 1; padding: 9px 11px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; }
+    #ragbot-foot button { padding: 9px 15px; border: none; border-radius: 8px; background: #0d6efd; color: #fff; font-weight: 600; cursor: pointer; }
+    #ragbot-foot button:disabled { background: #9bc1fb; }
+    #ragbot-msgs .rb-confirm { margin-top: 8px; }
+    #ragbot-msgs .rb-btn { padding: 6px 14px; border: none; border-radius: 7px; font-weight: 600; cursor: pointer; font-size: 13px; }
+    #ragbot-msgs .rb-yes { background: #0a8f2c; color: #fff; }
+    #ragbot-msgs .rb-no { background: #e0e3e8; color: #333; margin-left: 6px; }
+</style>
+
+<button id="ragbot-fab" title="Ask the AI assistant">🤖</button>
+<div id="ragbot-panel" aria-label="AI Assistant">
+    <div id="ragbot-head">
+        <span>🤖 AI Assistant</span>
+        <span class="x" title="Close">&times;</span>
+    </div>
+    <div id="ragbot-msgs"></div>
+    <div id="ragbot-foot">
+        <input id="ragbot-q" type="text" autocomplete="off" placeholder="Ask about trades, P/L, strategies…" />
+        <button id="ragbot-send">Send</button>
+    </div>
+</div>
+
+<script>
+    (function () {
+        if (window.__ragbotInit) return;   // render-once guard
+        window.__ragbotInit = true;
+
+        var fab = document.getElementById('ragbot-fab');
+        var panel = document.getElementById('ragbot-panel');
+        var msgs = document.getElementById('ragbot-msgs');
+        var input = document.getElementById('ragbot-q');
+        var send = document.getElementById('ragbot-send');
+        if (!fab || !panel) return;
+        var greeted = false;
+
+        function esc(s) {
+            return (s == null ? '' : String(s)).replace(/[&<>]/g,
+                function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; });
+        }
+        function addMsg(who, html) {
+            var d = document.createElement('div');
+            d.className = 'm ' + who;
+            d.innerHTML = '<div class="b">' + html + '</div>';
+            msgs.appendChild(d);
+            msgs.scrollTop = msgs.scrollHeight;
+            return d;
+        }
+        function toggle(openIt) {
+            var open = openIt != null ? openIt : !panel.classList.contains('open');
+            panel.classList.toggle('open', open);
+            if (open) {
+                if (!greeted) { addMsg('a', 'Hi! Ask about trades, P/L, accounts, strategies or live prices — or add/sell/track a stock, update a strategy comment, or add/edit/delete/exit an option-strategy leg (I\'ll ask you to confirm first).'); greeted = true; }
+                setTimeout(function () { input.focus(); }, 50);
+            }
+        }
+        function doExecute(w, b) {
+            b.className = 'b';
+            b.innerHTML = '<span style="color:#889">Working…</span>';
+            fetch('/Assistant/Execute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(w)
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (!d.success) { b.className = 'b err'; b.textContent = d.error || 'Failed.'; }
+                else { b.textContent = '✅ ' + (d.message || 'Done.'); }
+            })
+            .catch(function (e) { b.className = 'b err'; b.textContent = 'Failed: ' + e.message; });
+        }
+
+        var pendingContext = null;   // set when the bot last asked to clarify a field
+
+        function ask() {
+            var q = input.value.trim();
+            if (!q) return;
+            addMsg('u', esc(q));
+            input.value = '';
+            send.disabled = true;
+            var thinking = addMsg('a', '<span style="color:#889">Thinking…</span>');
+            var payload = { question: q };
+            if (pendingContext) payload.pending = pendingContext;
+            fetch('/Assistant/Ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                // Carry pending forward only when the server asks for another clarification.
+                pendingContext = (data && data.clarify && data.pending) ? data.pending : null;
+                var b = thinking.querySelector('.b');
+                if (!data.success) {
+                    b.className = 'b err';
+                    b.innerHTML = esc(data.error || 'Something went wrong.') +
+                        (data.sql ? '<pre>' + esc(data.sql) + '</pre>' : '');
+                    return;
+                }
+                if (data.confirm) {
+                    b.innerHTML = esc(data.summary) +
+                        '<div class="rb-confirm"><button class="rb-btn rb-yes">Confirm</button>' +
+                        '<button class="rb-btn rb-no">Cancel</button></div>';
+                    var w = data.write;
+                    b.querySelector('.rb-yes').addEventListener('click', function () { doExecute(w, b); });
+                    b.querySelector('.rb-no').addEventListener('click', function () {
+                        b.innerHTML = '<span style="color:#889">Cancelled — nothing was changed.</span>';
+                    });
+                    return;
+                }
+                var html = esc(data.answer);
+                if (data.sql) {
+                    html += '<details><summary>SQL &amp; data</summary><pre>' + esc(data.sql) + '</pre>';
+                    if (data.rows && data.rows.length) html += '<pre>' + esc(data.rows.length + ' row(s)') + '</pre>';
+                    html += '</details>';
+                }
+                b.innerHTML = html;
+            })
+            .catch(function (e) {
+                var b = thinking.querySelector('.b'); b.className = 'b err';
+                b.textContent = 'Request failed: ' + e.message;
+            })
+            .finally(function () { send.disabled = false; msgs.scrollTop = msgs.scrollHeight; });
+        }
+
+        fab.addEventListener('click', function () { toggle(); });
+        document.querySelector('#ragbot-head .x').addEventListener('click', function () { toggle(false); });
+        send.addEventListener('click', ask);
+        input.addEventListener('keydown', function (e) { if (e.key === 'Enter') ask(); });
+    })();
+</script>

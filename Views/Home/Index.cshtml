@@ -202,20 +202,22 @@
            <span id="datetimev" style="float: right;color:green ;font:100 18px Arial;"></span>
            <span id="dvholiday" title="happy holidays..." style="color:darkviolet;float:left;font-size:20px;"></span>
            <div style="clear:both;"></div>
-           <button type="button" id="btnToggleStockGrid" onclick="toggleStockGrid();" title="Collapse/Expand Grid" style="display:block;margin:4px 0;border:1px solid #999;background:#f5f5f5;cursor:pointer;font-size:14px;line-height:1;padding:2px 8px;border-radius:4px;">&#9650;</button>
-        
                                  <table class="table table-bordered" id="tblstock" style="width:100% !important">
                                     <thead>
                                         <tr>
                         <th style="background: blanchedalmond;"><a href="#" onclick = "return CompactView('0','1');" > <img src="/images/stack.jpg" style = "height:30px;" /> </a></th>
                         <th style="background: blanchedalmond;">Company Sector [<Span><Span style="color:green;">Adv: <span id="dadv">0</span> </Span>| <Span style="color:red;">Dec :<span id="ddec">0</span> </Span></Span> ]</th>
-                                           
-                        
+
+
                              @*   <th>Latest Value</th>*@
 
                         <th style ="background: blanchedalmond;">
-                            Today's:- <span id="todaygain"></span><span id="todaygaina" class="downMrktS"></span></th>
-                     
+                            Today's:- <span id="todaygain"></span><span id="todaygaina" class="downMrktS"></span>
+                            <button type="button" id="btnToggleStockGrid" onclick="toggleStockGrid();" class="btn btn-outline-secondary btn-sm" title="Show/Hide Grid" style="float:right;margin-left:10px;">
+                                <i class="fa fa-chevron-up"></i> Hide
+                            </button>
+                        </th>
+
                         <th style="background: blanchedalmond;">Overall:- <span id="overallgain"></span><span id="overallgaina" class="downMrktS"></span><Span id="dvcount" style="color:green;"></span></th>
                           
                                         </tr>
@@ -239,7 +241,7 @@
                                <div id="dvmonthlyprofit" class="clickable-pl" style="color:green;" title="Click for daily breakdown"></div>
                             <div id="dvdividend" style="color:green;"></div></th>
                         <th>
-                            <div id="dvtodayTotal" style="color:green;"></div>
+                            <div id="dvtodayTotal" class="clickable-pl" style="color:green;" title="Click for today's trade breakdown"></div>
                             <div id="dvmonthTotal" style="color:green;"></div>
                         </th>
                     </tr>
@@ -285,6 +287,22 @@
             <div class="modal-body" id="dailyPnlBody" style="font-size:15px;">Loading…</div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" id="dailyPnlFooterClose">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Today's trades breakdown popup -->
+<div class="modal fade" id="todayTradesModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="todayTradesTitle">Today's Trades</h5>
+                <button type="button" class="close" id="todayTradesClose" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body" id="todayTradesBody" style="font-size:15px;">Loading…</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="todayTradesFooterClose">Close</button>
             </div>
         </div>
     </div>
@@ -434,8 +452,12 @@ $(document).ready(function(){
 
 function applyStockGridState() {
     var collapsed = localStorage.getItem('stockGridCollapsed') === '1';
-    $('#tblstock').toggle(!collapsed);
-    $('#btnToggleStockGrid').html(collapsed ? '&#9654;' : '&#9660;');
+    // Toggle rows only — header stays visible so Today's/Overall totals and
+    // the Hide/Show button never disappear.
+    $('#tblstock tbody').toggle(!collapsed);
+    $('#btnToggleStockGrid').html(collapsed
+        ? '<i class="fa fa-chevron-down"></i> Show'
+        : '<i class="fa fa-chevron-up"></i> Hide');
 }
 
 function toggleStockGrid() {
@@ -818,6 +840,88 @@ function toggleStockGrid() {
 
     $(document).on('click', '#dailyPnlClose, #dailyPnlFooterClose', function () {
         $('#dailyPnlModal').modal('hide');
+    });
+
+    // Click "Today's P/L[Month]" to open a per-trade breakdown popup, grouped by
+    // account with a subtotal per account plus an overall today's total.
+    $(document).on('click', '#dvtodayTotal', function () {
+        var d = new Date();
+        var monthName = month[d.getMonth()];
+
+        $('#todayTradesTitle').text("Today's Trades — " + monthName + ' ' + d.getFullYear());
+        $('#todayTradesBody').html('Loading…');
+        $('#todayTradesModal').modal('show');
+
+        $.getJSON('/Home/GetTodayTrades', function (resp) {
+            if (!resp || !resp.ok) {
+                $('#todayTradesBody').html('<div style="color:#c00;">Failed to load: ' + ((resp && resp.error) ? resp.error : 'unknown') + '</div>');
+                return;
+            }
+            var rows = resp.rows || [];
+            if (!rows.length) {
+                $('#todayTradesBody').html('<div style="color:#666;">No trades sold today.</div>');
+                return;
+            }
+
+            var inr = function (v) {
+                return Number(v).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            };
+            var plColor = function (v) { return v > 0 ? 'green' : (v < 0 ? 'red' : '#555'); };
+
+            // Group rows by account, preserving the account order they arrive in.
+            var groups = {}, order = [];
+            $.each(rows, function (i, r) {
+                var acc = r.account || 'Unassigned';
+                if (!groups[acc]) { groups[acc] = []; order.push(acc); }
+                groups[acc].push(r);
+            });
+
+            var html = '<table class="table table-sm table-bordered" style="margin-bottom:0;">' +
+                '<thead style="background:#f6e6e8;"><tr>' +
+                '<th>Script</th>' +
+                '<th style="text-align:right;">Buy Price</th>' +
+                '<th style="text-align:right;">Sell Price</th>' +
+                '<th style="text-align:right;">Profit (₹)</th>' +
+                '<th>Account</th>' +
+                '</tr></thead><tbody>';
+
+            var grandTotal = 0;
+            $.each(order, function (gi, acc) {
+                var accTotal = 0;
+                $.each(groups[acc], function (i, r) {
+                    var profit = Number(r.profit) || 0;
+                    accTotal += profit;
+                    html += '<tr>' +
+                        '<td>' + $('<div>').text(r.script).html() + '</td>' +
+                        '<td style="text-align:right;">' + inr(r.buyPrice) + '</td>' +
+                        '<td style="text-align:right;">' + inr(r.sellPrice) + '</td>' +
+                        '<td style="text-align:right;color:' + plColor(profit) + ';font-weight:600;">' + inr(profit) + '</td>' +
+                        '<td>' + $('<div>').text(acc).html() + '</td>' +
+                        '</tr>';
+                });
+                grandTotal += accTotal;
+                // Per-account subtotal row
+                html += '<tr style="background:#fafafa;font-weight:700;">' +
+                    '<td colspan="3" style="text-align:right;">' + $('<div>').text(acc).html() + ' total</td>' +
+                    '<td style="text-align:right;color:' + plColor(accTotal) + ';">' + inr(accTotal) + '</td>' +
+                    '<td></td>' +
+                    '</tr>';
+            });
+
+            html += '</tbody><tfoot><tr style="font-weight:800;background:#f0f0f0;">' +
+                '<td colspan="3" style="text-align:right;">TODAY\'S TOTAL</td>' +
+                '<td style="text-align:right;color:' + plColor(grandTotal) + ';">' + inr(grandTotal) + '</td>' +
+                '<td></td>' +
+                '</tr></tfoot></table>';
+
+            $('#todayTradesBody').html(html);
+        }).fail(function () {
+            $('#todayTradesBody').html('<div style="color:#c00;">Failed to fetch.</div>');
+        });
+    });
+
+    $(document).on('click', '#todayTradesClose, #todayTradesFooterClose', function () {
+        $('#todayTradesModal').modal('hide');
     });
 
     $(document).ready(function () {
@@ -1946,3 +2050,5 @@ $('#dvcount').text(" ["+plus_count+" / "+jsonObj.length+"]");
     }
     
 </script>
+
+@await Html.PartialAsync("_RagBot")

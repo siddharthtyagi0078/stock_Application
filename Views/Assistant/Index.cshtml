@@ -1,0 +1,127 @@
+@{
+    ViewData["Title"] = "AI Assistant";
+}
+
+<style>
+    .rag-wrap { max-width: 900px; margin: 0 auto; font-family: 'Segoe UI', Arial, sans-serif; }
+    .rag-wrap h3 { margin: 12px 0 4px; }
+    .rag-sub { color:#666; margin-bottom:14px; }
+    .rag-samples span {
+        display:inline-block; background:#eef1f5; color:#334; border-radius:14px;
+        padding:5px 12px; margin:0 6px 6px 0; font-size:13px; cursor:pointer; border:1px solid #dde;
+    }
+    .rag-samples span:hover { background:#e2e8f2; }
+    .rag-input { display:flex; gap:8px; margin-bottom:18px; }
+    .rag-input input {
+        flex:1; padding:12px 14px; font-size:16px; border:1px solid #ccc; border-radius:8px;
+    }
+    .rag-input button {
+        padding:12px 22px; font-size:16px; font-weight:600; color:#fff; background:#0d6efd;
+        border:none; border-radius:8px; cursor:pointer;
+    }
+    .rag-input button:disabled { background:#9bc1fb; cursor:default; }
+    .rag-card { border:1px solid #e3e3e3; border-radius:10px; margin-bottom:16px; overflow:hidden; }
+    .rag-card .hd { background:#f6f8fa; padding:10px 14px; font-weight:600; }
+    .rag-card .bd { padding:14px; }
+    .rag-ans { font-size:17px; white-space:pre-wrap; line-height:1.45; }
+    .rag-err { color:#c62828; }
+    .rag-card details { margin-top:10px; }
+    .rag-card summary { color:#666; font-size:13px; cursor:pointer; }
+    .rag-card pre { background:#f6f8fa; padding:10px; border-radius:6px; font-size:12.5px; overflow-x:auto; }
+    .rag-tbl-wrap { overflow-x:auto; }
+    .rag-tbl { border-collapse:collapse; width:100%; font-size:13px; }
+    .rag-tbl th, .rag-tbl td { border:1px solid #e3e3e3; padding:5px 8px; text-align:left; white-space:nowrap; }
+    .rag-tbl th { background:#f6f8fa; }
+</style>
+
+<div class="rag-wrap">
+    <h3>🤖 AI Knowledge Assistant</h3>
+    <div class="rag-sub">Ask about your trades, P/L, accounts and option strategies. Answers use your live database.</div>
+
+    <div class="rag-samples">
+        <span>P/L this month by account</span>
+        <span>Top 5 most profitable trades this year</span>
+        <span>Which stocks are still open?</span>
+        <span>List option strategies on nifty</span>
+    </div>
+
+    <div class="rag-input">
+        <input id="q" type="text" autocomplete="off"
+               placeholder="e.g. How much profit did Sid-Connect make this month?" />
+        <button id="ask">Ask</button>
+    </div>
+
+    <div id="chat"></div>
+</div>
+
+<script>
+    (function () {
+        var chat = document.getElementById('chat');
+        var q = document.getElementById('q');
+        var askBtn = document.getElementById('ask');
+        var ASK_URL = '@Url.Action("Ask", "Assistant")';
+
+        function esc(s) {
+            return (s == null ? '' : String(s)).replace(/[&<>]/g,
+                function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; });
+        }
+
+        function tableHtml(cols, rows) {
+            if (!cols || !cols.length) return '';
+            var h = '<div class="rag-tbl-wrap"><table class="rag-tbl"><thead><tr>';
+            h += cols.map(function (c) { return '<th>' + esc(c) + '</th>'; }).join('') + '</tr></thead><tbody>';
+            h += rows.map(function (r) {
+                return '<tr>' + r.map(function (v) { return '<td>' + esc(v) + '</td>'; }).join('') + '</tr>';
+            }).join('');
+            return h + '</tbody></table></div>';
+        }
+
+        function card(headerHtml, bodyHtml) {
+            var d = document.createElement('div');
+            d.className = 'rag-card';
+            d.innerHTML = '<div class="hd">' + headerHtml + '</div><div class="bd">' + bodyHtml + '</div>';
+            chat.insertBefore(d, chat.firstChild);
+            return d;
+        }
+
+        function ask() {
+            var question = q.value.trim();
+            if (!question) return;
+            askBtn.disabled = true;
+            var c = card(esc(question), '<div class="rag-ans" style="color:#888">Thinking…</div>');
+            var body = c.querySelector('.bd');
+            q.value = '';
+
+            fetch(ASK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: question })
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success) {
+                    body.innerHTML = '<div class="rag-err">' + esc(data.error || 'Something went wrong.') + '</div>' +
+                        (data.sql ? '<pre>' + esc(data.sql) + '</pre>' : '');
+                    return;
+                }
+                var html = '<div class="rag-ans">' + esc(data.answer) + '</div>';
+                html += '<details><summary>Show data &amp; SQL</summary>';
+                html += '<pre>' + esc(data.sql) + '</pre>';
+                html += tableHtml(data.columns, data.rows);
+                html += '</details>';
+                body.innerHTML = html;
+            })
+            .catch(function (e) {
+                body.innerHTML = '<div class="rag-err">Request failed: ' + esc(e.message) + '</div>';
+            })
+            .finally(function () { askBtn.disabled = false; });
+        }
+
+        askBtn.addEventListener('click', ask);
+        q.addEventListener('keydown', function (e) { if (e.key === 'Enter') ask(); });
+        var samples = document.querySelectorAll('.rag-samples span');
+        for (var i = 0; i < samples.length; i++) {
+            samples[i].addEventListener('click', function () { q.value = this.textContent; ask(); });
+        }
+    })();
+</script>

@@ -37,7 +37,7 @@ SQL_CONN = (
     "SERVER=103.21.58.192;"
     "DATABASE=ifutujah_paym;"
     "UID=puser;"
-    "PWD=Concept@2711;"
+    "PWD=Timer@2711;"
     "Encrypt=no;"
 )
 # -----------------------------------------------------------------

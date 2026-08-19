@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KPT Agro — Mushroom Farm | Coming Soon</title>
+<meta name="description" content="KPT Agro — Fresh, farm-grown mushrooms. Our website is under construction. Launching soon." />
+<style>
+  :root{
+    --bg:#0f1a12;
+    --bg-2:#16281a;
+    --card:rgba(255,255,255,0.06);
+    --border:rgba(255,255,255,0.12);
+    --text:#f2f6f0;
+    --muted:#b8c6ba;
+    --accent:#7bc47f;
+    --accent-2:#e0a96d;
+    --shadow:0 20px 60px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #2b4a30 0%, transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, #3a5233 0%, transparent 55%),
+      linear-gradient(160deg,var(--bg) 0%, var(--bg-2) 100%);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    overflow-x:hidden;
+  }
+
+  /* floating mushroom decorations */
+  .deco{position:fixed;font-size:42px;opacity:.10;user-select:none;pointer-events:none;animation:float 9s ease-in-out infinite}
+  .deco.d1{top:12%;left:8%;animation-delay:0s}
+  .deco.d2{top:70%;left:12%;font-size:60px;animation-delay:1.5s}
+  .deco.d3{top:22%;right:10%;font-size:54px;animation-delay:.8s}
+  .deco.d4{bottom:14%;right:14%;animation-delay:2.2s}
+  @keyframes float{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-18px) rotate(4deg)}}
+
+  .card{
+    position:relative;
+    width:100%;
+    max-width:680px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:24px;
+    padding:48px 40px;
+    text-align:center;
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    box-shadow:var(--shadow);
+  }
+
+  .logo{
+    display:inline-flex;
+    align-items:center;
+    gap:12px;
+    padding:10px 20px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    background:rgba(123,196,127,.10);
+    margin-bottom:28px;
+  }
+  .logo .mark{font-size:26px}
+  .logo .name{font-weight:700;letter-spacing:2px;font-size:15px}
+  .logo .name span{color:var(--accent)}
+
+  .emoji{
+    font-size:72px;
+    line-height:1;
+    margin-bottom:18px;
+    display:inline-block;
+    animation:pop 4s ease-in-out infinite;
+  }
+  @keyframes pop{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+
+  h1{
+    font-size:clamp(28px,6vw,44px);
+    line-height:1.15;
+    margin-bottom:14px;
+    font-weight:800;
+  }
+  h1 .hl{
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .tag{color:var(--muted);font-size:17px;max-width:460px;margin:0 auto 28px;line-height:1.6}
+
+  .bar{
+    height:10px;border-radius:999px;background:rgba(255,255,255,.10);
+    overflow:hidden;margin:0 auto 10px;max-width:420px;
+  }
+  .bar > i{
+    display:block;height:100%;width:65%;border-radius:999px;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    animation:load 3s ease-in-out infinite;
+  }
+  @keyframes load{0%{width:15%}50%{width:75%}100%{width:15%}}
+  .barlabel{color:var(--muted);font-size:13px;letter-spacing:1px;margin-bottom:34px}
+
+  .feats{
+    display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-bottom:34px;
+  }
+  .feat{
+    flex:1 1 150px;max-width:190px;
+    background:rgba(255,255,255,.05);
+    border:1px solid var(--border);
+    border-radius:16px;padding:18px 14px;
+  }
+  .feat .ico{font-size:26px;margin-bottom:8px}
+  .feat .t{font-weight:600;font-size:15px;margin-bottom:4px}
+  .feat .d{color:var(--muted);font-size:13px;line-height:1.4}
+
+  .contact{
+    display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:8px;
+  }
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    text-decoration:none;font-weight:600;font-size:15px;
+    padding:12px 22px;border-radius:999px;transition:transform .15s ease,box-shadow .15s ease;
+  }
+  .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#10240f}
+  .btn.ghost{border:1px solid var(--border);color:var(--text);background:transparent}
+  .btn:hover{transform:translateY(-2px)}
+
+  .foot{
+    margin-top:34px;padding-top:24px;
+    border-top:1px solid var(--border);
+    color:var(--muted);font-size:13px;
+  }
+  .foot-grid{
+    display:flex;flex-wrap:wrap;gap:22px;justify-content:space-between;
+    text-align:left;margin-bottom:22px;
+  }
+  .foot-col{flex:1 1 180px;min-width:150px}
+  .foot-col h4{
+    color:var(--text);font-size:13px;letter-spacing:1.5px;
+    text-transform:uppercase;margin-bottom:12px;
+  }
+  .foot-col ul{list-style:none}
+  .foot-col li{margin-bottom:8px}
+  .foot a{color:var(--muted);text-decoration:none;transition:color .15s ease}
+  .foot a:hover{color:var(--accent)}
+  .foot .social{font-size:20px;letter-spacing:12px}
+  .foot .social a{display:inline-block}
+  .foot .social a:hover{transform:translateY(-2px)}
+  .foot-bottom{
+    display:flex;flex-wrap:wrap;gap:8px 16px;
+    align-items:center;justify-content:space-between;
+    padding-top:18px;border-top:1px solid var(--border);
+  }
+  .foot-bottom .powered a{color:var(--accent);font-weight:600;text-decoration:none}
+  .foot-bottom .powered a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+  <div class="deco d1">🍄</div>
+  <div class="deco d2">🍄</div>
+  <div class="deco d3">🍄</div>
+  <div class="deco d4">🍄</div>
+
+  <main class="card">
+    <div class="logo">
+      <span class="mark">🍄</span>
+      <span class="name">KPT<span> AGRO</span></span>
+    </div>
+
+    <div class="emoji">🍄</div>
+    <h1>Something Fresh is <span class="hl">Growing</span></h1>
+    <p class="tag">
+      Our website is currently under construction. KPT Agro is cultivating
+      premium, farm-fresh mushrooms — and a brand-new online home for them.
+    </p>
+
+    <div class="bar"><i></i></div>
+    <div class="barlabel">UNDER CONSTRUCTION · LAUNCHING SOON</div>
+
+    <div class="feats">
+      <div class="feat">
+        <div class="ico">🌱</div>
+        <div class="t">Farm Fresh</div>
+        <div class="d">Grown daily in a controlled, hygienic environment.</div>
+      </div>
+      <div class="feat">
+        <div class="ico">🚚</div>
+        <div class="t">Fast Delivery</div>
+        <div class="d">From our farm to your table with care.</div>
+      </div>
+      <div class="feat">
+        <div class="ico">✅</div>
+        <div class="t">100% Natural</div>
+        <div class="d">No chemicals — pure, healthy mushrooms.</div>
+      </div>
+    </div>
+
+    <div class="contact">
+      <a class="btn primary" href="mailto:kgupta805@gmail.com">✉️ Contact Us</a>
+      <a class="btn ghost" href="tel:+910000000000">📞 Call Us</a>
+    </div>
+
+    <footer class="foot">
+      <div class="foot-grid">
+        <div class="foot-col">
+          <h4>KPT Agro</h4>
+          <p style="line-height:1.6">Premium farm-fresh mushrooms, grown with care in a clean, controlled environment.</p>
+        </div>
+        <div class="foot-col">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="#">Home</a></li>
+            <li><a href="#">About Us</a></li>
+            <li><a href="#">Our Products</a></li>
+            <li><a href="#">Contact</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h4>Get in Touch</h4>
+          <ul>
+            <li>✉️ <a href="mailto:kgupta805@gmail.com">kgupta805@gmail.com</a></li>
+            <li>📞 <a href="tel:+910000000000">+91 00000 00000</a></li>
+            <li>📍 India</li>
+          </ul>
+          <div class="social" style="margin-top:12px">
+            <a href="#" aria-label="Facebook">📘</a>
+            <a href="#" aria-label="Instagram">📸</a>
+            <a href="#" aria-label="WhatsApp">💬</a>
+          </div>
+        </div>
+      </div>
+      <div class="foot-bottom">
+        <span>&copy; <span id="yr"></span> KPT Agro. All rights reserved.</span>
+        <span class="powered">Powered by <a href="https://ifuturecorporation.com" target="_blank" rel="noopener">Ifuture Corporation</a></span>
+      </div>
+    </footer>
+  </main>
+
+  <script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
+</body>
+</html>

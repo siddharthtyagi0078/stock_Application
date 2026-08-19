@@ -57,6 +57,154 @@ namespace StockWebApplications
             return list;
         }
 
+        // Executes a validated read-only SELECT for the AI assistant. Runs inside a
+        // transaction that is ALWAYS rolled back, so even a query that somehow slips
+        // past SqlGuard cannot persist any change. Returns the result grid.
+        public DataTable RunReadOnlyQuery(string sql, int maxRows = 500, int timeoutSeconds = 30)
+        {
+            var dt = new DataTable();
+            using var con = new SqlConnection(ConnectioString);
+            con.Open();
+            using var tx = con.BeginTransaction();
+            try
+            {
+                using var cmd = new SqlCommand(sql, con, tx) { CommandTimeout = timeoutSeconds };
+                using var rdr = cmd.ExecuteReader();
+                dt.Load(rdr);
+            }
+            finally
+            {
+                tx.Rollback();   // never commit — this path is strictly read-only
+            }
+
+            if (dt.Rows.Count > maxRows)
+            {
+                for (int i = dt.Rows.Count - 1; i >= maxRows; i--)
+                    dt.Rows.RemoveAt(i);
+            }
+            return dt;
+        }
+
+        // Live stock/ETF quote (Yahoo) for the AI assistant. Normalises the symbol
+        // to an NSE ticker (.NS) when no exchange suffix is supplied.
+        public async Task<StockModel> GetLiveStockAsync(string symbol)
+        {
+            var s = (symbol ?? "").Trim().ToUpperInvariant();
+            if (s.Length == 0) return new StockModel();
+            if (!s.Contains('.')) s += ".NS";
+            return await GetStockLive(s);
+        }
+
+        // Open (unsold) share rows matching a symbol — used to resolve a "sell"
+        // request to a concrete row id. Parameterised (no string interpolation).
+        public List<(int Id, string Code, int Shares, decimal Buy, string Account)> FindOpenShares(string symbol)
+        {
+            var s = (symbol ?? "").Trim().ToUpperInvariant();
+            if (s.Length == 0) return new();
+            if (!s.Contains('.')) s += ".NS";
+
+            var list = new List<(int, string, int, decimal, string)>();
+            using var con = new SqlConnection(ConnectioString);
+            using var cmd = new SqlCommand(
+                @"SELECT id, Script_code, shares, inv_Price, ISNULL(Account,'') AS Account
+                  FROM dbo.Shares WHERE ISNULL(sold,0)=0 AND Script_code=@c ORDER BY id", con);
+            cmd.Parameters.AddWithValue("@c", s);
+            con.Open();
+            using var rdr = cmd.ExecuteReader();
+            while (rdr.Read())
+                list.Add((Convert.ToInt32(rdr["id"]), Convert.ToString(rdr["Script_code"]),
+                          Convert.ToInt32(rdr["shares"]), Convert.ToDecimal(rdr["inv_Price"]),
+                          Convert.ToString(rdr["Account"])));
+            return list;
+        }
+
+        // Resolve an option strategy by (partial) name to its id. By default only
+        // strategies with at least one active leg are considered — closed/fully-
+        // exited strategies would otherwise create false ambiguities when the
+        // same name is reused across a new strategy. Pass activeOnly=false to
+        // include closed ones (rare — e.g. attaching a comment to history).
+        public List<(int Id, string Name)> FindStrategyByName(string name, bool activeOnly = true)
+        {
+            var n = (name ?? "").Trim();
+            var list = new List<(int, string)>();
+            if (n.Length == 0) return list;
+
+            var sql = activeOnly
+                ? @"SELECT s.StrategyId, s.StrategyName
+                    FROM dbo.OptionStrategy s
+                    WHERE s.StrategyName LIKE @n
+                      AND EXISTS (SELECT 1 FROM dbo.OptionStrategyLeg l
+                                  WHERE l.StrategyId = s.StrategyId AND l.isactive = 1)
+                    ORDER BY s.StrategyId DESC"
+                : @"SELECT StrategyId, StrategyName
+                    FROM dbo.OptionStrategy
+                    WHERE StrategyName LIKE @n
+                    ORDER BY StrategyId DESC";
+
+            using var con = new SqlConnection(ConnectioString);
+            using var cmd = new SqlCommand(sql, con);
+            cmd.Parameters.AddWithValue("@n", "%" + n + "%");
+            con.Open();
+            using var rdr = cmd.ExecuteReader();
+            while (rdr.Read())
+                list.Add((Convert.ToInt32(rdr["StrategyId"]), Convert.ToString(rdr["StrategyName"])));
+            return list;
+        }
+
+        // Curated schema "knowledge base" handed to the model as retrieval context.
+        // Focused on what users actually ask about (trades, P/L, accounts, strategies).
+        public const string SchemaKnowledge = @"
+DATABASE: Microsoft SQL Server (T-SQL). Use T-SQL syntax only. Use TOP (n), not LIMIT.
+
+TABLE dbo.Shares  -- one row per stock/ETF/futures BUY position (may later be sold)
+  id            INT
+  Script_code   VARCHAR  e.g. 'RELIANCE.NS', 'NIFTY1.NS', 'SILVERBEES.NS' (NSE symbol, suffix .NS)
+  Script_name   VARCHAR  company/display name
+  shares        INT      quantity
+  inv_Price     DECIMAL  buy price per share
+  sell_price    DECIMAL  sell price per share (NULL until sold)
+  sell_date     DATE     date sold (NULL until sold)
+  DateAdded     DATETIME date bought
+  sold          INT      1 = closed/realized, 0 = still open
+  Account       VARCHAR  'Arnav-Angelone' | 'Sid-Connect' | 'Archana-Angelone' | NULL (unassigned)
+  Dividend      DECIMAL
+  charges       DECIMAL
+  KEY MEASURE: realized profit/loss of a sold row = (sell_price - inv_Price) * shares.
+  Only rows WHERE sold = 1 are realized. Filter a month by sell_date.
+
+TABLE dbo.OptionStrategy  -- an options strategy (a basket of legs)
+  StrategyId    INT
+  StrategyName  VARCHAR  e.g. 'Arnav-Nifty2'
+  Symbol        VARCHAR  underlying, e.g. 'nifty'
+  LotSize       INT
+  Remarks       VARCHAR  AI-generated comment/summary
+  Account       VARCHAR  same account values as Shares
+
+TABLE dbo.OptionStrategyLeg  -- legs of a strategy
+  strategylegid INT
+  StrategyId    INT      FK -> OptionStrategy.StrategyId
+  LegNo         INT
+  ActionType    VARCHAR  'BUY' | 'SELL'
+  InstrumentType VARCHAR 'CE' | 'PE' | 'FUTURE'
+  StrikePrice   DECIMAL
+  TradePrice    DECIMAL
+  Quantity      INT
+  ExpiryDate    DATE
+  isactive      BIT      1 = open leg
+
+TABLE dbo.dividend
+  div_date      DATE
+  dividend      DECIMAL
+
+TABLE dbo.nifty_ema_daily  -- precomputed NIFTY EMA trend rows
+  candle, [close], ema10, ema30, trend, is_cross
+
+NOTES:
+- Money is Indian Rupees (Rs).
+- 'this month' / 'current month' = sell_date in the current calendar month.
+- Account-wise P/L groups dbo.Shares by Account with SUM((sell_price-inv_Price)*shares) where sold=1.
+";
+
         // Read pre-computed NIFTY EMA rows written by the Python job. take=0 returns all.
         public List<AngelOneClient.NiftyEmaRow> GetNiftyEmaFromDb(int take = 0)
         {
@@ -304,12 +452,26 @@ namespace StockWebApplications
 
                         if (!leg.IsActive && rdr["ExitPrice"] != DBNull.Value && rdr["SharesInvPrice"] != DBNull.Value)
                         {
-                            // usp_ExitPosition already sign-maps sell_price/inv_Price so
-                            // (sell_price - inv_Price) * qty is the realized profit.
-                            var sell = Convert.ToDecimal(rdr["ExitPrice"]);
-                            var inv  = Convert.ToDecimal(rdr["SharesInvPrice"]);
+                            // usp_ExitPosition sign-maps sell_price/inv_Price so
+                            // (sell_price - inv_Price) * qty is the realized profit
+                            // regardless of the leg's original direction.
+                            var sell = Convert.ToDecimal(rdr["ExitPrice"]);       // sh.sell_price
+                            var inv  = Convert.ToDecimal(rdr["SharesInvPrice"]);  // sh.inv_Price
                             var qty  = rdr["SharesQty"] == DBNull.Value ? leg.Quantity : Convert.ToInt32(rdr["SharesQty"]);
                             leg.PL = (sell - inv) * qty;
+
+                            // Exit price shown to the user = the actual close-out trade,
+                            // i.e. the side OPPOSITE the leg's entry direction:
+                            //   SELL leg entered at sh.sell_price -> exit is sh.inv_Price
+                            //   BUY  leg entered at sh.inv_Price  -> exit is sh.sell_price
+                            leg.ExitPrice = string.Equals(leg.ActionType, "SELL", StringComparison.OrdinalIgnoreCase)
+                                ? inv
+                                : sell;
+                        }
+                        else
+                        {
+                            // Still open (or no shares row) — no exit yet.
+                            leg.ExitPrice = null;
                         }
 
                         master.Legs.Add(leg);
@@ -357,6 +519,41 @@ namespace StockWebApplications
 
                 cmd.ExecuteNonQuery();
             }
+        }
+
+        // In-place edit of a leg. Any parameter left null keeps its current value.
+        // Used by the AI assistant's edit_leg confirm/execute flow.
+        public void UpdateStrategyLeg(
+            int legId,
+            string actionType = null,
+            string instrumentType = null,
+            decimal? strikePrice = null,
+            decimal? tradePrice = null,
+            int? quantity = null,
+            DateTime? expiryDate = null)
+        {
+            var sets = new List<string>();
+            if (actionType     != null) sets.Add("ActionType = @ActionType");
+            if (instrumentType != null) sets.Add("InstrumentType = @InstrumentType");
+            if (strikePrice    != null) sets.Add("StrikePrice = @StrikePrice");
+            if (tradePrice     != null) sets.Add("TradePrice = @TradePrice");
+            if (quantity       != null) sets.Add("Quantity = @Quantity");
+            if (expiryDate     != null) sets.Add("ExpiryDate = @ExpiryDate");
+            if (sets.Count == 0) return;
+
+            using var con = new SqlConnection(ConnectioString);
+            using var cmd = new SqlCommand(
+                "UPDATE dbo.OptionStrategyLeg SET " + string.Join(", ", sets) +
+                " WHERE strategylegid = @LegId", con);
+            cmd.Parameters.AddWithValue("@LegId", legId);
+            if (actionType     != null) cmd.Parameters.AddWithValue("@ActionType", actionType);
+            if (instrumentType != null) cmd.Parameters.AddWithValue("@InstrumentType", instrumentType);
+            if (strikePrice    != null) cmd.Parameters.AddWithValue("@StrikePrice", strikePrice.Value);
+            if (tradePrice     != null) cmd.Parameters.AddWithValue("@TradePrice",  tradePrice.Value);
+            if (quantity       != null) cmd.Parameters.AddWithValue("@Quantity",    quantity.Value);
+            if (expiryDate     != null) cmd.Parameters.AddWithValue("@ExpiryDate",  expiryDate.Value);
+            con.Open();
+            cmd.ExecuteNonQuery();
         }
 
         public void DeleteStrategyLeg(int legId)
@@ -1631,6 +1828,42 @@ namespace StockWebApplications
                     return Convert.ToDecimal(val);
                 }
             }
+        }
+
+        // Per-trade breakdown of everything realized today (sold = 1, sell_date = today).
+        // Powers the "Today's P/L" popup: script, buy price, sell price, profit, account.
+        public List<object> GetTodayTrades()
+        {
+            var list = new List<object>();
+            const string sql =
+                @"SELECT ISNULL(NULLIF(LTRIM(RTRIM(Script_name)),''), Script_code) AS script,
+                         inv_Price  AS buyPrice,
+                         sell_price AS sellPrice,
+                         shares,
+                         (sell_price - inv_Price) * shares AS profit,
+                         ISNULL(NULLIF(LTRIM(RTRIM(Account)),''),'Unassigned') AS account
+                  FROM   dbo.shares
+                  WHERE  ISNULL(sold, 0) = 1
+                    AND  CAST(sell_date AS DATE) = CAST(GETDATE() AS DATE)
+                  ORDER BY account, script";
+
+            using var con = new SqlConnection(ConnectioString);
+            using var cmd = new SqlCommand(sql, con);
+            con.Open();
+            using var rdr = cmd.ExecuteReader();
+            while (rdr.Read())
+            {
+                list.Add(new
+                {
+                    script    = Convert.ToString(rdr["script"]),
+                    buyPrice  = rdr["buyPrice"]  == DBNull.Value ? 0m : Convert.ToDecimal(rdr["buyPrice"]),
+                    sellPrice = rdr["sellPrice"] == DBNull.Value ? 0m : Convert.ToDecimal(rdr["sellPrice"]),
+                    shares    = rdr["shares"]    == DBNull.Value ? 0  : Convert.ToInt32(rdr["shares"]),
+                    profit    = rdr["profit"]    == DBNull.Value ? 0m : Convert.ToDecimal(rdr["profit"]),
+                    account   = Convert.ToString(rdr["account"])
+                });
+            }
+            return list;
         }
 
         public string brokeragereport()
